@@ -1,0 +1,280 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:InsideOS.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="InsideOS.Pages.LiveViewPage">
+
+    <UserControl.Styles>
+        <Style Selector="Border.dashCard">
+            <Setter Property="Background" Value="{StaticResource BrushCard}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushCardBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="18,15"/>
+            <Setter Property="BoxShadow" Value="0 4 14 0 #26000000"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.14"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.14"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.dashCard.clickable">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Border.dashCard.clickable:pointerover">
+            <Setter Property="Background" Value="#10FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#24FFFFFF"/>
+        </Style>
+        <Style Selector="TextBlock.cardLabel">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1.2"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        </Style>
+        <Style Selector="Border.rowHover">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.rowHover:pointerover">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*" Margin="32,28,32,0">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="pageTitle" Text="Live View"/>
+            <TextBlock Classes="pageSubtitle" Text="Your computer at a glance — everything here is live."/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="0,22,0,0" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12" Margin="0,0,0,28" MaxWidth="1060" HorizontalAlignment="Left">
+
+                <!-- ===== System health ===== -->
+                <Border Classes="dashCard" Padding="20,16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="6" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="9">
+                                <Ellipse x:Name="HealthDot" Width="9" Height="9"
+                                         Fill="#656F82" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="HealthHeadline" Text="Measuring your system…"
+                                           FontSize="16" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                            </StackPanel>
+                            <TextBlock x:Name="HealthDetail"
+                                       Text="Live measurements will appear in a moment."
+                                       FontSize="11.5"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4"
+                                    VerticalAlignment="Center" HorizontalAlignment="Right">
+                            <TextBlock x:Name="SysFacts" FontSize="11" TextAlignment="Right"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock x:Name="SysFacts2" FontSize="11" TextAlignment="Right"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ===== Most active process + current activity ===== -->
+                <Grid ColumnDefinitions="3*,2*">
+                    <Border x:Name="ActiveCard" Classes="dashCard clickable" Margin="0,0,6,0"
+                            PointerPressed="OnActiveCardPressed">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="MOST ACTIVE PROCESS"/>
+                                <TextBlock Grid.Column="1" Text="Open in Action Flow ›"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource BrushAccent}"/>
+                            </Grid>
+
+                            <TextBlock x:Name="ActiveEmpty" Text="Watching your processes…"
+                                       FontSize="11.5"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+
+                            <Grid x:Name="ActiveBody" ColumnDefinitions="Auto,*" IsVisible="False">
+                                <Border x:Name="ActiveAvatar" Width="34" Height="34"
+                                        CornerRadius="10" BorderThickness="1"
+                                        VerticalAlignment="Center">
+                                    <TextBlock x:Name="ActiveInitial" FontSize="14" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="2"
+                                            VerticalAlignment="Center">
+                                    <TextBlock x:Name="ActiveName" FontSize="14.5" FontWeight="SemiBold"
+                                               Foreground="{StaticResource BrushTextPrimary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Ellipse x:Name="ActiveStatusDot" Width="6" Height="6"
+                                                 VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="ActiveStatus" FontSize="11"
+                                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid x:Name="ActiveStats" ColumnDefinitions="*,*" IsVisible="False">
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="CPU" FontSize="10" LetterSpacing="1"
+                                               Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock x:Name="ActiveCpu" FontSize="19" FontWeight="SemiBold"
+                                               Foreground="{StaticResource BrushTextPrimary}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock Text="MEMORY" FontSize="10" LetterSpacing="1"
+                                               Foreground="{StaticResource BrushTextMuted}"/>
+                                    <TextBlock x:Name="ActiveMem" FontSize="19" FontWeight="SemiBold"
+                                               Foreground="{StaticResource BrushTextPrimary}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Height="1" Background="{StaticResource BrushHairline}"/>
+                            <TextBlock x:Name="ActiveExplanation" FontSize="11.5" LineHeight="16"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrushTextSecondary}"
+                                       Text="The explanation engine will describe this process once data arrives.">
+                                <TextBlock.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Opacity" Duration="0:0:0.18"/>
+                                    </Transitions>
+                                </TextBlock.Transitions>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Classes="dashCard" Margin="6,0,0,0">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="cardLabel" Text="CURRENT ACTIVITY"/>
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="ActivityLine1" Text="Watching processes…"
+                                           FontSize="11.5" LineHeight="16" TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrushTextSecondary}"/>
+                                <TextBlock x:Name="ActivityLine2" FontSize="11.5" LineHeight="16"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrushTextMuted}"/>
+                                <TextBlock x:Name="ActivityLine3" FontSize="11.5" LineHeight="16"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrushTextMuted}"/>
+                            </StackPanel>
+                            <Border Height="1" Background="{StaticResource BrushHairline}"/>
+                            <StackPanel Spacing="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock x:Name="Top1Name" FontSize="11.5"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="Top1Val" Grid.Column="1" FontSize="11.5"
+                                               FontWeight="Medium" Margin="10,0,0,0"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock x:Name="Top2Name" FontSize="11.5"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="Top2Val" Grid.Column="1" FontSize="11.5"
+                                               FontWeight="Medium" Margin="10,0,0,0"/>
+                                </Grid>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock x:Name="Top3Name" FontSize="11.5"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock x:Name="Top3Val" Grid.Column="1" FontSize="11.5"
+                                               FontWeight="Medium" Margin="10,0,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- ===== Resources ===== -->
+                <TextBlock Classes="sectionLabel" Text="RESOURCES" Margin="2,8,0,0"/>
+                <Grid ColumnDefinitions="*,*,*,*">
+                    <controls:MetricCard x:Name="CpuCard" Margin="0,0,12,0"
+                                         Title="CPU Usage"
+                                         Icon="{StaticResource IconGauge}"
+                                         Subtitle="Share of time all cores spend busy"
+                                         ShowBar="True"/>
+                    <controls:MetricCard x:Name="MemoryCard" Grid.Column="1" Margin="0,0,12,0"
+                                         Title="Memory"
+                                         Icon="{StaticResource IconMemChip}"
+                                         Subtitle="Apps, wired and compressed in use"
+                                         ShowBar="True"/>
+                    <controls:MetricCard x:Name="DiskCard" Grid.Column="2" Margin="0,0,12,0"
+                                         Title="Disk Usage"
+                                         Icon="{StaticResource IconDisk}"
+                                         Subtitle="Used space on the system volume"
+                                         ShowBar="True"/>
+                    <controls:MetricCard x:Name="NetworkCard" Grid.Column="3"
+                                         Title="Network"
+                                         Icon="{StaticResource IconGlobe}"
+                                         Subtitle="Combined traffic on active interfaces"/>
+                </Grid>
+
+                <!-- ===== Recent timeline + insights + learning ===== -->
+                <Grid ColumnDefinitions="3*,2*" Margin="0,4,0,0">
+                    <Border Classes="dashCard" Margin="0,0,6,0" VerticalAlignment="Top">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="RECENT TIMELINE"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Classes="ghost" Content="View all"
+                                        Padding="10,3" FontSize="10.5" Click="OnViewTimeline"/>
+                            </Grid>
+                            <StackPanel x:Name="TimelineRows" Spacing="2"/>
+                            <TextBlock x:Name="TimelineEmpty" FontSize="11.5" LineHeight="16"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource BrushTextMuted}"
+                                       Text="Your computer is quiet — stories appear here as applications do meaningful work."/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="6,0,0,0" Spacing="12">
+                        <Border Classes="dashCard">
+                            <StackPanel Spacing="9">
+                                <TextBlock Classes="cardLabel" Text="LIVE INSIGHTS"/>
+                                <StackPanel x:Name="InsightRows" Spacing="8"/>
+                                <TextBlock x:Name="InsightsEmptyDash" FontSize="11.5" LineHeight="16"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrushTextMuted}"
+                                           Text="Watching your system — insights appear as activity happens."/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="dashCard">
+                            <StackPanel Spacing="9">
+                                <TextBlock Classes="cardLabel" Text="LEARNING"/>
+                                <TextBlock x:Name="LessonTitle" FontSize="12.5" FontWeight="Medium"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock x:Name="LessonMeta" FontSize="11"
+                                           Foreground="{StaticResource BrushTextMuted}"/>
+                                <ProgressBar x:Name="LearnBar"
+                                             Height="4" MinHeight="4" CornerRadius="2"
+                                             Minimum="0" Maximum="100" Value="0"
+                                             Background="#14FFFFFF"
+                                             Foreground="{StaticResource BrushAccent}">
+                                    <ProgressBar.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Property="Value" Duration="0:0:0.5"
+                                                              Easing="CubicEaseOut"/>
+                                        </Transitions>
+                                    </ProgressBar.Transitions>
+                                </ProgressBar>
+                                <Button Classes="ghost" Content="Continue Learning"
+                                        HorizontalAlignment="Left" Margin="0,2,0,0"
+                                        Click="OnContinueLearning"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

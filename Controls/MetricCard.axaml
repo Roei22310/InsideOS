@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="InsideOS.Controls.MetricCard">
+    <Border Classes="metricCard" MinHeight="150">
+        <Grid RowDefinitions="Auto,Auto,Auto,*">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Border Classes="metricIconBox">
+                    <Viewbox Width="15" Height="15"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path x:Name="IconPath" Width="24" Height="24" Classes="metricIcon"/>
+                    </Viewbox>
+                </Border>
+                <TextBlock x:Name="TitleText" Classes="metricTitle" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="1" x:Name="ValueText" Classes="metricValue"
+                       Margin="0,14,0,0" Text="—"/>
+
+            <TextBlock Grid.Row="2" x:Name="SubtitleText" Classes="metricSubtitle"
+                       Margin="0,5,0,0"/>
+
+            <ProgressBar Grid.Row="3" x:Name="Bar"
+                         Height="4" MinHeight="4" CornerRadius="2"
+                         Minimum="0" Maximum="100" Value="0"
+                         IsVisible="False"
+                         Background="#14FFFFFF" Foreground="#4D9FFF"
+                         VerticalAlignment="Bottom" Margin="0,14,0,0">
+                <ProgressBar.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Value" Duration="0:0:0.45" Easing="CubicEaseOut"/>
+                    </Transitions>
+                </ProgressBar.Transitions>
+            </ProgressBar>
+        </Grid>
+    </Border>
+</UserControl>

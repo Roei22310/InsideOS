@@ -1,0 +1,277 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:InsideOS.Controls"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="InsideOS.Pages.MetricsPage">
+
+    <UserControl.Styles>
+        <Style Selector="Border.dashCard">
+            <Setter Property="Background" Value="{StaticResource BrushCard}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushCardBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16,13"/>
+            <Setter Property="BoxShadow" Value="0 4 14 0 #26000000"/>
+        </Style>
+        <Style Selector="TextBlock.cardLabel">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1.2"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        </Style>
+        <Style Selector="TextBlock.nowVal">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+        <Style Selector="TextBlock.statLine">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+        </Style>
+        <Style Selector="TextBlock.trendChip">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style Selector="Border.rangeBar">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Padding" Value="3"/>
+        </Style>
+        <Style Selector="Border.rangePill">
+            <Setter Property="Padding" Value="11,4"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.rangePill:pointerover">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+        <Style Selector="Border.rangePill.selected">
+            <Setter Property="Background" Value="#2E4D9FFF"/>
+        </Style>
+        <Style Selector="Border.rangePill TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+        <Style Selector="Border.rangePill.selected TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+
+        <Style Selector="Border.procRow">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,7"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.procRow:pointerover">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="32,28,32,0">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="pageTitle" Text="Metrics"/>
+            <TextBlock Classes="pageSubtitle"
+                       Text="How your system has behaved over time — every point is a real measurement."/>
+        </StackPanel>
+
+        <!-- Time range -->
+        <Border Grid.Row="1" Classes="rangeBar" HorizontalAlignment="Left" Margin="0,18,0,0">
+            <StackPanel x:Name="RangeBar" Orientation="Horizontal">
+                <Border Classes="rangePill" Tag="1" PointerPressed="OnRangePressed">
+                    <TextBlock Text="1 Minute"/>
+                </Border>
+                <Border Classes="rangePill selected" Tag="5" PointerPressed="OnRangePressed">
+                    <TextBlock Text="5 Minutes"/>
+                </Border>
+                <Border Classes="rangePill" Tag="15" PointerPressed="OnRangePressed">
+                    <TextBlock Text="15 Minutes"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" Margin="0,18,0,0" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12" Margin="0,0,0,28" MaxWidth="1060" HorizontalAlignment="Left">
+
+                <!-- Historical health summary -->
+                <Border Classes="dashCard" Padding="18,14">
+                    <StackPanel Spacing="7">
+                        <TextBlock Classes="cardLabel" Text="HISTORY OVERVIEW"/>
+                        <TextBlock x:Name="HealthLine1" FontSize="11.5" LineHeight="16" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextSecondary}"
+                                   Text="Collecting measurements…"/>
+                        <TextBlock x:Name="HealthLine2" FontSize="11.5" LineHeight="16" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                        <TextBlock x:Name="HealthLine3" FontSize="11.5" LineHeight="16" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                        <TextBlock x:Name="HealthLine4" FontSize="11.5" LineHeight="16" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Charts -->
+                <Grid ColumnDefinitions="*,*">
+                    <Border Classes="dashCard" Margin="0,0,6,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="CPU USAGE"/>
+                                <TextBlock x:Name="CpuNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="CpuChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="CpuStats" Classes="statLine"/>
+                                <TextBlock x:Name="CpuTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="dashCard" Margin="6,0,0,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="MEMORY USED"/>
+                                <TextBlock x:Name="MemNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="MemChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="MemStats" Classes="statLine"/>
+                                <TextBlock x:Name="MemTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*">
+                    <Border Classes="dashCard" Margin="0,0,6,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="NETWORK DOWNLOAD"/>
+                                <TextBlock x:Name="DownNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="DownChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="DownStats" Classes="statLine"/>
+                                <TextBlock x:Name="DownTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="dashCard" Margin="6,0,0,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="NETWORK UPLOAD"/>
+                                <TextBlock x:Name="UpNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="UpChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="UpStats" Classes="statLine"/>
+                                <TextBlock x:Name="UpTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*">
+                    <Border Classes="dashCard" Margin="0,0,6,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="DISK USED"/>
+                                <TextBlock x:Name="DiskNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="DiskChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="DiskStats" Classes="statLine"/>
+                                <TextBlock x:Name="DiskTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="dashCard" Margin="6,0,0,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="BATTERY"/>
+                                <TextBlock x:Name="BatteryNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <Panel>
+                                <controls:HistoryChart x:Name="BatteryChart" Height="104"/>
+                                <TextBlock x:Name="BatteryNA" IsVisible="False"
+                                           Text="No battery detected on this machine."
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource BrushTextMuted}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Panel>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="BatteryStats" Classes="statLine"/>
+                                <TextBlock x:Name="BatteryTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*">
+                    <Border Classes="dashCard" Margin="0,0,6,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="PROCESSES"/>
+                                <TextBlock x:Name="ProcNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="ProcChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="ProcStats" Classes="statLine"/>
+                                <TextBlock x:Name="ProcTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="dashCard" Margin="6,0,0,0">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="cardLabel" Text="ACTIVE PROCESSES"/>
+                                <TextBlock x:Name="ActiveNow" Grid.Column="1" Classes="nowVal"/>
+                            </Grid>
+                            <controls:HistoryChart x:Name="ActiveChart" Height="104"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock x:Name="ActiveStats" Classes="statLine"/>
+                                <TextBlock x:Name="ActiveTrend" Grid.Column="1" Classes="trendChip"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Most active applications over the window -->
+                <Border Classes="dashCard" Padding="16,14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="cardLabel" Text="MOST ACTIVE APPLICATIONS"/>
+                        <Grid ColumnDefinitions="*,76,76,96,52" Margin="10,0,10,0">
+                            <TextBlock Text="Application" FontSize="10"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock Grid.Column="1" Text="Avg CPU" FontSize="10" TextAlignment="Right"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock Grid.Column="2" Text="Peak CPU" FontSize="10" TextAlignment="Right"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock Grid.Column="3" Text="Avg Memory" FontSize="10" TextAlignment="Right"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                            <TextBlock Grid.Column="4" Text="Trend" FontSize="10" TextAlignment="Right"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                        </Grid>
+                        <StackPanel x:Name="ProcRows" Spacing="1"/>
+                        <TextBlock x:Name="ProcEmpty" FontSize="11.5"
+                                   Foreground="{StaticResource BrushTextMuted}"
+                                   Text="Process history is still warming up — active applications appear here shortly."/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -1,0 +1,224 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:InsideOS.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
+             x:Class="InsideOS.Pages.ProcessExplorerPage">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.colHeader">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.colHeader.sortable">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="TextBlock.colHeader.sortable:pointerover">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+
+        <Style Selector="ListBox.procList">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="6,0"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem">
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="6"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#0AFFFFFF"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#264D9FFF"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2E4D9FFF"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#264D9FFF"/>
+        </Style>
+        <Style Selector="ListBox.procList ListBoxItem:selected:focus:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2E4D9FFF"/>
+        </Style>
+
+        <Style Selector="TextBox.search">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="32,28,32,28">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="pageTitle" Text="Processes"/>
+            <TextBlock Classes="pageSubtitle" Text="See which applications are active right now and what they are doing."/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" ColumnDefinitions="300,*" Margin="0,20,0,12">
+            <TextBox x:Name="SearchBox" Classes="search"
+                     PlaceholderText="Search processes…"
+                     TextChanged="OnSearchChanged"/>
+            <TextBlock Grid.Column="1" x:Name="CountText"
+                       HorizontalAlignment="Right" VerticalAlignment="Center"
+                       FontSize="12" Foreground="{StaticResource BrushTextMuted}"/>
+        </Grid>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,12,300">
+
+            <!-- Process list -->
+            <Border Classes="metricCard" Padding="0">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,70,110,110,100" Margin="16,12,30,10">
+                        <TextBlock Classes="colHeader sortable" x:Name="NameHeader"
+                                   Text="PROCESS" PointerPressed="OnNameHeaderPressed"/>
+                        <TextBlock Grid.Column="1" Classes="colHeader" Text="PID"/>
+                        <TextBlock Grid.Column="2" Classes="colHeader sortable" x:Name="CpuHeader"
+                                   Text="CPU ▾" PointerPressed="OnCpuHeaderPressed"/>
+                        <TextBlock Grid.Column="3" Classes="colHeader sortable" x:Name="MemoryHeader"
+                                   Text="MEMORY" PointerPressed="OnMemoryHeaderPressed"/>
+                        <TextBlock Grid.Column="4" Classes="colHeader" Text="STATUS"/>
+                    </Grid>
+                    <Border Grid.Row="0" VerticalAlignment="Bottom" Height="1"
+                            Background="{StaticResource BrushHairline}"/>
+
+                    <ListBox Grid.Row="1" x:Name="ProcessList" Classes="procList"
+                             SelectionMode="Single" Margin="0,4,0,6"
+                             SelectionChanged="OnSelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ProcessRowViewModel">
+                                <Grid ColumnDefinitions="*,70,110,110,100">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="12.5"
+                                               Foreground="{StaticResource BrushTextPrimary}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PidText}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource BrushTextMuted}"
+                                               VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="4">
+                                        <TextBlock Text="{Binding CpuText}"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                                        <Border Width="44" Height="3" CornerRadius="1.5"
+                                                Background="#14FFFFFF" HorizontalAlignment="Left">
+                                            <Border Height="3" CornerRadius="1.5"
+                                                    HorizontalAlignment="Left"
+                                                    Background="{Binding CpuBarBrush}"
+                                                    Width="{Binding CpuBarWidth}">
+                                                <Border.Transitions>
+                                                    <Transitions>
+                                                        <DoubleTransition Property="Width" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                                                    </Transitions>
+                                                </Border.Transitions>
+                                            </Border>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="3" Text="{Binding MemoryText}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource BrushTextSecondary}"
+                                               VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal"
+                                                Spacing="7" VerticalAlignment="Center">
+                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                 Fill="{Binding StatusBrush}"/>
+                                        <TextBlock Text="{Binding StatusText}"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource BrushTextSecondary}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Details panel -->
+            <Border Grid.Column="2" Classes="metricCard" Padding="18">
+                <Panel>
+                    <StackPanel x:Name="DetailsEmpty" Spacing="8"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Classes="placeholderTitle" Text="No process selected"/>
+                        <TextBlock Classes="placeholderBody"
+                                   Text="Select a process from the list to inspect it."/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="DetailsContent" IsVisible="False">
+                        <TextBlock x:Name="DetailName" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BrushTextPrimary}"
+                                   TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" Spacing="7" Margin="0,7,0,0">
+                            <Ellipse x:Name="DetailStatusDot" Width="7" Height="7" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="DetailStatusText" FontSize="11.5"
+                                       Foreground="{StaticResource BrushTextSecondary}"/>
+                        </StackPanel>
+
+                        <Border Height="1" Background="{StaticResource BrushHairline}" Margin="0,16,0,16"/>
+
+                        <TextBlock Classes="sectionLabel" Text="CPU USAGE"/>
+                        <TextBlock x:Name="DetailCpu" FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0"/>
+                        <ProgressBar x:Name="DetailCpuBar"
+                                     Height="4" MinHeight="4" CornerRadius="2"
+                                     Minimum="0" Maximum="100"
+                                     Background="#14FFFFFF" Foreground="#4D9FFF"
+                                     Margin="0,10,0,0">
+                            <ProgressBar.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Value" Duration="0:0:0.45" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </ProgressBar.Transitions>
+                        </ProgressBar>
+
+                        <TextBlock Classes="sectionLabel" Text="MEMORY" Margin="0,18,0,0"/>
+                        <TextBlock x:Name="DetailMemory" FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{StaticResource BrushTextPrimary}" Margin="0,6,0,0"/>
+                        <ProgressBar x:Name="DetailMemoryBar"
+                                     Height="4" MinHeight="4" CornerRadius="2"
+                                     Minimum="0" Maximum="100"
+                                     Background="#14FFFFFF" Foreground="#4D9FFF"
+                                     Margin="0,10,0,0">
+                            <ProgressBar.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Value" Duration="0:0:0.45" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </ProgressBar.Transitions>
+                        </ProgressBar>
+                        <TextBlock x:Name="DetailMemoryShare" FontSize="11"
+                                   Foreground="{StaticResource BrushTextMuted}" Margin="0,6,0,0"/>
+
+                        <Border Height="1" Background="{StaticResource BrushHairline}" Margin="0,16,0,16"/>
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                            <StackPanel Spacing="5">
+                                <TextBlock Classes="sectionLabel" Text="PID"/>
+                                <TextBlock x:Name="DetailPid" FontSize="13"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="5">
+                                <TextBlock Classes="sectionLabel" Text="THREADS"/>
+                                <TextBlock x:Name="DetailThreads" FontSize="13"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Spacing="5" Margin="0,14,0,0">
+                                <TextBlock Classes="sectionLabel" Text="STARTED"/>
+                                <TextBlock x:Name="DetailStart" FontSize="13"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Panel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

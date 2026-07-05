@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="InsideOS.Pages.SettingsPage">
+    <Grid RowDefinitions="Auto,*" Margin="32,28,32,28">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="pageTitle" Text="Settings"/>
+            <TextBlock Classes="pageSubtitle" Text="Tune InsideOS to fit your workflow."/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12" MaxWidth="620" HorizontalAlignment="Left">
+
+                <TextBlock Classes="sectionLabel" Text="LEARNING"/>
+
+                <!-- Learning progress -->
+                <Border Classes="metricCard" Padding="18">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Learning Progress"
+                                       FontSize="13.5" FontWeight="Medium"
+                                       Foreground="{StaticResource BrushTextPrimary}"/>
+                            <TextBlock Grid.Column="1" x:Name="ProgressSummary"
+                                       FontSize="12" Foreground="{StaticResource BrushTextMuted}"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                        <ProgressBar x:Name="ProgressBarControl"
+                                     Height="4" MinHeight="4" CornerRadius="2"
+                                     Minimum="0" Maximum="100" Value="0"
+                                     Background="#14FFFFFF"
+                                     Foreground="{StaticResource BrushAccent}">
+                            <ProgressBar.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Value" Duration="0:0:0.5" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </ProgressBar.Transitions>
+                        </ProgressBar>
+
+                        <Border Height="1" Background="{StaticResource BrushHairline}"/>
+
+                        <!-- Lesson list (future lessons appear here automatically) -->
+                        <StackPanel x:Name="LessonList" Spacing="10"/>
+
+                        <TextBlock Text="More lessons will appear here soon."
+                                   FontSize="11.5" Foreground="{StaticResource BrushTextMuted}"/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Classes="sectionLabel" Text="GENERAL" Margin="0,10,0,0"/>
+
+                <!-- First run experience -->
+                <Border Classes="metricCard" Padding="18">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="First Run Experience"
+                                       FontSize="13.5" FontWeight="Medium"
+                                       Foreground="{StaticResource BrushTextPrimary}"/>
+                            <TextBlock Text="Replay the guided introduction that shows what InsideOS is and how to explore your operating system."
+                                       FontSize="12" TextWrapping="Wrap" LineHeight="17"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="ghost" Content="Restart Introduction"
+                                VerticalAlignment="Center" Margin="18,0,0,0"
+                                Click="OnRestartIntroduction"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

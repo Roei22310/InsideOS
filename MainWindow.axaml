@@ -1,0 +1,278 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:InsideOS.Controls"
+        mc:Ignorable="d" d:DesignWidth="1180" d:DesignHeight="720"
+        x:Class="InsideOS.MainWindow"
+        Title="InsideOS"
+        Width="1180" Height="720"
+        MinWidth="920" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrushBgContent}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1">
+
+    <Window.Styles>
+        <Style Selector="ListBox.nav">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="10,0"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem">
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="MinHeight" Value="38"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#17FFFFFF"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1CFFFFFF"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#17FFFFFF"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected:focus:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1CFFFFFF"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem Path">
+            <Setter Property="Stroke" Value="{StaticResource BrushTextMuted}"/>
+            <Setter Property="StrokeThickness" Value="1.8"/>
+            <Setter Property="StrokeLineCap" Value="Round"/>
+            <Setter Property="StrokeJoin" Value="Round"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected Path">
+            <Setter Property="Stroke" Value="{StaticResource BrushAccent}"/>
+        </Style>
+
+        <Style Selector="Border.modeSwitch">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Padding" Value="3"/>
+        </Style>
+        <Style Selector="Border.modeSegment">
+            <Setter Property="Padding" Value="11,4"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.modeSegment:pointerover">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+        <Style Selector="Border.modeSegment.selected">
+            <Setter Property="Background" Value="#2E4D9FFF"/>
+        </Style>
+        <Style Selector="Border.modeSegment TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+        <Style Selector="Border.modeSegment.selected TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+    </Window.Styles>
+
+    <Panel>
+    <Grid ColumnDefinitions="248,*">
+
+        <!-- ===== Sidebar ===== -->
+        <Border Grid.Column="0"
+                Background="{StaticResource BrushBgSidebar}"
+                BorderBrush="{StaticResource BrushHairline}"
+                BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+
+                <!-- Brand (also a drag area, padded below the macOS traffic lights) -->
+                <Border Grid.Row="0" Background="Transparent"
+                        PointerPressed="OnDragAreaPointerPressed">
+                    <StackPanel Orientation="Horizontal" Spacing="11" Margin="20,46,20,20">
+                        <Border Width="30" Height="30" CornerRadius="9"
+                                Background="{StaticResource BrushLogo}">
+                            <Viewbox Width="15" Height="15"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Path Width="24" Height="24"
+                                      Data="{StaticResource IconPulse}"
+                                      Stroke="White" StrokeThickness="2.4"
+                                      StrokeLineCap="Round" StrokeJoin="Round"/>
+                            </Viewbox>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center" Spacing="1">
+                            <TextBlock Text="InsideOS" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource BrushTextPrimary}"/>
+                            <TextBlock Text="System Insights" FontSize="10.5"
+                                       Foreground="{StaticResource BrushTextMuted}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Section label -->
+                <TextBlock Grid.Row="1" Text="OVERVIEW"
+                           Margin="24,0,20,6"
+                           FontSize="10" FontWeight="SemiBold" LetterSpacing="1.2"
+                           Foreground="{StaticResource BrushTextMuted}"/>
+
+                <!-- Main navigation -->
+                <ListBox Grid.Row="2" x:Name="NavList" Classes="nav"
+                         SelectionMode="Single"
+                         SelectionChanged="OnNavSelectionChanged">
+                    <ListBoxItem Tag="learning">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconBook}"/>
+                            </Viewbox>
+                            <TextBlock Text="Learning" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="timeline">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconTimeline}"/>
+                            </Viewbox>
+                            <TextBlock Text="Timeline" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="live">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconPulse}"/>
+                            </Viewbox>
+                            <TextBlock Text="Live View" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="processes">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconProcesses}"/>
+                            </Viewbox>
+                            <TextBlock Text="Processes" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="flow">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconFlow}"/>
+                            </Viewbox>
+                            <TextBlock Text="Action Flow" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="metrics">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconMetrics}"/>
+                            </Viewbox>
+                            <TextBlock Text="Metrics" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+
+                <!-- Settings, pinned to the bottom -->
+                <ListBox Grid.Row="3" x:Name="SettingsList" Classes="nav"
+                         SelectionMode="Single" Margin="0,0,0,6"
+                         SelectionChanged="OnNavSelectionChanged">
+                    <ListBoxItem Tag="settings">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconSettings}"/>
+                            </Viewbox>
+                            <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+
+                <!-- Footer -->
+                <Border Grid.Row="4"
+                        BorderBrush="{StaticResource BrushHairline}"
+                        BorderThickness="0,1,0,0" Padding="22,12">
+                    <TextBlock Text="Version 0.1.0 · Preview" FontSize="11"
+                               Foreground="{StaticResource BrushTextMuted}"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ===== Main area ===== -->
+        <Grid Grid.Column="1" RowDefinitions="52,*">
+
+            <!-- Title bar -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource BrushBgContent}"
+                    BorderBrush="{StaticResource BrushHairline}"
+                    BorderThickness="0,0,0,1"
+                    PointerPressed="OnDragAreaPointerPressed">
+                <Grid ColumnDefinitions="*,Auto,Auto" Margin="24,0,18,0">
+                    <StackPanel Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                        <TextBlock Text="InsideOS" FontSize="12.5"
+                                   Foreground="{StaticResource BrushTextMuted}"/>
+                        <TextBlock Text="›" FontSize="12.5"
+                                   Foreground="{StaticResource BrushTextMuted}"/>
+                        <TextBlock x:Name="CrumbText" Text="Live View"
+                                   FontSize="12.5" FontWeight="Medium"
+                                   Foreground="{StaticResource BrushTextPrimary}"/>
+                    </StackPanel>
+                    <Border Grid.Column="1" Classes="modeSwitch"
+                            VerticalAlignment="Center" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="MonitorModeSeg" Classes="modeSegment selected"
+                                    PointerPressed="OnMonitorModePressed">
+                                <TextBlock Text="Monitor Mode"/>
+                            </Border>
+                            <Border x:Name="LearnModeSeg" Classes="modeSegment"
+                                    PointerPressed="OnLearnModePressed">
+                                <TextBlock Text="Learn Mode"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" VerticalAlignment="Center"
+                            Background="#0DFFFFFF"
+                            BorderBrush="{StaticResource BrushHairline}" BorderThickness="1"
+                            CornerRadius="99" Padding="10,4">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                     Fill="{StaticResource BrushSuccess}"/>
+                            <TextBlock Text="Ready" FontSize="11"
+                                       Foreground="{StaticResource BrushTextSecondary}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Page host -->
+            <TransitioningContentControl Grid.Row="1" x:Name="PageHost">
+                <TransitioningContentControl.PageTransition>
+                    <CrossFade Duration="0:0:0.18"/>
+                </TransitioningContentControl.PageTransition>
+            </TransitioningContentControl>
+        </Grid>
+    </Grid>
+
+    <!-- First-run guided introduction (empty areas pass clicks through) -->
+    <controls:OnboardingOverlay x:Name="Onboarding"/>
+    </Panel>
+</Window>

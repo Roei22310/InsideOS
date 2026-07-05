@@ -1,0 +1,263 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="InsideOS.Controls.OnboardingOverlay">
+
+    <UserControl.Styles>
+        <Style Selector="Border.obCard">
+            <Setter Property="Background" Value="#1B2029"/>
+            <Setter Property="BorderBrush" Value="#26FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="BoxShadow" Value="0 12 40 0 #66000000"/>
+        </Style>
+        <Style Selector="TextBlock.obLabel">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="LetterSpacing" Value="1.2"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushAccent}"/>
+        </Style>
+        <Style Selector="Border.obView">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.34" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <!-- Staggered reveal elements inside modals -->
+        <Style Selector=":is(Control).obStagger">
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="RenderTransform" Value="translateY(8px)"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.32" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Transparent root: empty areas pass clicks through to the app below. -->
+    <Panel>
+
+        <!-- ===== Welcome (full screen, step 1) ===== -->
+        <Border x:Name="WelcomeView" Classes="obView" Background="#16181E"
+                IsVisible="False" Opacity="0"
+                RenderTransform="scale(1)" RenderTransformOrigin="50%,50%">
+            <StackPanel MaxWidth="560" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Width="62" Height="62" CornerRadius="18"
+                        Background="{StaticResource BrushLogo}"
+                        HorizontalAlignment="Center"
+                        BoxShadow="0 10 34 0 #5A4D9FFF">
+                    <Viewbox Width="30" Height="30"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Width="24" Height="24" Data="{StaticResource IconPulse}"
+                              Stroke="White" StrokeThickness="2.4"
+                              StrokeLineCap="Round" StrokeJoin="Round"/>
+                    </Viewbox>
+                </Border>
+
+                <TextBlock Text="Welcome to InsideOS"
+                           FontSize="32" FontWeight="SemiBold" LetterSpacing="-0.4"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           HorizontalAlignment="Center" Margin="0,30,0,0"/>
+
+                <TextBlock Text="Most people use a computer every day."
+                           FontSize="14.5" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           Margin="0,26,0,0"/>
+                <TextBlock Text="Very few people understand what is actually happening inside their computer."
+                           FontSize="13.5" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           Margin="0,12,0,0" LineHeight="21"/>
+                <TextBlock Text="InsideOS lets you visualize, explore and understand your operating system in real time."
+                           FontSize="13.5" TextAlignment="Center" TextWrapping="Wrap"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           Margin="0,12,0,0" LineHeight="21"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="12"
+                            HorizontalAlignment="Center" Margin="0,36,0,0">
+                    <Button Classes="primary" Content="Start Learning" Click="OnStartLearning"/>
+                    <Button Classes="ghost" Content="Skip and Open Dashboard" Click="OnSkip"/>
+                </StackPanel>
+
+                <TextBlock Text="Takes about a minute — everything runs locally on your Mac."
+                           FontSize="11.5" TextAlignment="Center"
+                           Foreground="{StaticResource BrushTextMuted}"
+                           Margin="0,18,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== Dim backdrop for modals ===== -->
+        <Border x:Name="Backdrop" Background="#C210131A" IsVisible="False" Opacity="0">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.28"/>
+                </Transitions>
+            </Border.Transitions>
+        </Border>
+
+        <!-- ===== Experiment banner (non-blocking, step 2) ===== -->
+        <Border x:Name="ExperimentView" Classes="obCard obView"
+                MaxWidth="620" Padding="22,18"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="24,0,24,28"
+                IsVisible="False" Opacity="0" RenderTransform="translateY(26px)">
+            <StackPanel Spacing="8">
+                <TextBlock Classes="obLabel" Text="YOUR FIRST EXPERIMENT"/>
+                <TextBlock Text="Select any active application from the Process Explorer"
+                           FontSize="15.5" FontWeight="SemiBold"
+                           Foreground="{StaticResource BrushTextPrimary}"/>
+                <TextBlock Text="Click any process in the list above — for example Google Chrome, Safari, Visual Studio Code, Discord or Finder."
+                           FontSize="12.5" TextWrapping="Wrap" LineHeight="19"
+                           Foreground="{StaticResource BrushTextSecondary}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== Success celebration (step 3) ===== -->
+        <Border x:Name="SuccessView" Classes="obCard obView"
+                Width="440" Padding="34,32"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                IsVisible="False" Opacity="0"
+                RenderTransform="scale(0.94)" RenderTransformOrigin="50%,50%">
+            <StackPanel HorizontalAlignment="Stretch">
+                <Border x:Name="SuccessCheck" Width="58" Height="58" CornerRadius="29"
+                        Background="#1F3FBF7F" BorderBrush="#383FBF7F" BorderThickness="1"
+                        HorizontalAlignment="Center"
+                        Opacity="0" RenderTransform="scale(0.6)" RenderTransformOrigin="50%,50%">
+                    <Border.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.4" Easing="BackEaseOut"/>
+                        </Transitions>
+                    </Border.Transitions>
+                    <Viewbox Width="26" Height="26"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Width="24" Height="24" Data="{StaticResource IconCheck}"
+                              Stroke="#3FBF7F" StrokeThickness="2.4"
+                              StrokeLineCap="Round" StrokeJoin="Round"/>
+                    </Viewbox>
+                </Border>
+
+                <TextBlock x:Name="SuccessTitle" Classes="obStagger"
+                           Text="Excellent!" FontSize="23" FontWeight="SemiBold"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           HorizontalAlignment="Center" Margin="0,18,0,0"/>
+                <TextBlock x:Name="SuccessBody" Classes="obStagger"
+                           Text="You just observed your first real operating system event."
+                           FontSize="13.5" TextAlignment="Center" TextWrapping="Wrap" LineHeight="20"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           Margin="0,10,0,0"/>
+                <TextBlock x:Name="SuccessHint" Classes="obStagger"
+                           Text="InsideOS can now explain what your operating system is doing for this application."
+                           FontSize="12" TextAlignment="Center" TextWrapping="Wrap" LineHeight="18"
+                           Foreground="{StaticResource BrushTextMuted}"
+                           Margin="0,8,0,0"/>
+                <Button x:Name="SuccessButton" Classes="primary obStagger"
+                        Content="Show Me Why"
+                        HorizontalAlignment="Center" Margin="0,20,0,0"
+                        Click="OnShowMeWhy"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== Guided tour caption (non-blocking, step 4) ===== -->
+        <Border x:Name="GuidedView" Classes="obCard obView"
+                MaxWidth="560" Padding="20,16"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="24,0,24,28"
+                IsVisible="False" Opacity="0" RenderTransform="translateY(26px)">
+            <StackPanel Spacing="7">
+                <TextBlock Classes="obLabel" Text="GUIDED TOUR"/>
+                <TextBlock x:Name="GuidedCaption"
+                           FontSize="13.5" TextWrapping="Wrap" LineHeight="20"
+                           Foreground="{StaticResource BrushTextPrimary}">
+                    <TextBlock.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="CubicEaseOut"/>
+                        </Transitions>
+                    </TextBlock.Transitions>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== Lesson complete ===== -->
+        <Border x:Name="LessonCompleteView" Classes="obCard obView"
+                Width="470" Padding="34,32"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                IsVisible="False" Opacity="0"
+                RenderTransform="scale(0.94)" RenderTransformOrigin="50%,50%">
+            <StackPanel HorizontalAlignment="Stretch">
+                <Border Width="58" Height="58" CornerRadius="29"
+                        Background="#1F3FBF7F" BorderBrush="#383FBF7F" BorderThickness="1"
+                        HorizontalAlignment="Center">
+                    <Viewbox Width="26" Height="26"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Width="24" Height="24" Data="{StaticResource IconCheck}"
+                              Stroke="#3FBF7F" StrokeThickness="2.4"
+                              StrokeLineCap="Round" StrokeJoin="Round"/>
+                    </Viewbox>
+                </Border>
+
+                <TextBlock Text="Lesson Complete" FontSize="23" FontWeight="SemiBold"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           HorizontalAlignment="Center" Margin="0,18,0,0"/>
+                <TextBlock Text="You have successfully explored your first operating system event."
+                           FontSize="13.5" TextAlignment="Center" TextWrapping="Wrap" LineHeight="20"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           Margin="0,10,0,0"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="10"
+                            HorizontalAlignment="Center" Margin="0,20,0,0">
+                    <TextBlock x:Name="LessonProgressText" Text="LESSON 1 OF 12 · PROGRESS 8%"
+                               FontSize="10" FontWeight="SemiBold" LetterSpacing="1"
+                               Foreground="{StaticResource BrushTextMuted}"
+                               VerticalAlignment="Center"/>
+                    <Border Width="120" Height="3" CornerRadius="1.5"
+                            Background="#1FFFFFFF" VerticalAlignment="Center">
+                        <Border x:Name="LessonProgressFill" Width="0" Height="3" CornerRadius="1.5"
+                                Background="{StaticResource BrushAccent}" HorizontalAlignment="Left">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Width" Duration="0:0:0.6" Easing="CubicEaseOut"/>
+                                </Transitions>
+                            </Border.Transitions>
+                        </Border>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12"
+                            HorizontalAlignment="Center" Margin="0,22,0,0">
+                    <Button Classes="primary" Content="Continue Learning" Click="OnContinueLearning"/>
+                    <Button Classes="ghost" Content="Explore Freely" Click="OnContinue"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== Persistent progress chip (top center) ===== -->
+        <Border x:Name="ProgressChip" Classes="obCard obView"
+                CornerRadius="99" Padding="16,9"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,54,0,0"
+                IsVisible="False" Opacity="0" RenderTransform="translateY(-14px)">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Classes="obLabel" Text="LESSON 1" VerticalAlignment="Center"/>
+                <Border Width="1" Height="12" Background="#26FFFFFF" VerticalAlignment="Center"/>
+                <TextBlock x:Name="StepText" Text="STEP 1 OF 4"
+                           FontSize="10" FontWeight="SemiBold" LetterSpacing="1.2"
+                           Foreground="{StaticResource BrushTextSecondary}"
+                           VerticalAlignment="Center"/>
+                <Border Width="120" Height="3" CornerRadius="1.5"
+                        Background="#1FFFFFFF" VerticalAlignment="Center">
+                    <Border x:Name="StepFill" Width="30" Height="3" CornerRadius="1.5"
+                            Background="{StaticResource BrushAccent}" HorizontalAlignment="Left">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Width" Duration="0:0:0.5" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </Border.Transitions>
+                    </Border>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Panel>
+</UserControl>

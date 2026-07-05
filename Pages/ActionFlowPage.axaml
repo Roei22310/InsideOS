@@ -1,0 +1,289 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:InsideOS.Controls"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="680"
+             x:Class="InsideOS.Pages.ActionFlowPage">
+
+    <UserControl.Styles>
+        <Style Selector="Path.edgeBase">
+            <Setter Property="Stroke" Value="#14FFFFFF"/>
+            <Setter Property="StrokeThickness" Value="1.25"/>
+        </Style>
+
+        <!-- Flowing particles: speed and brightness reflect the activity tier.
+             With no tier class the particles fade out entirely. -->
+        <Style Selector="Path.edgeFlow">
+            <Setter Property="StrokeThickness" Value="3"/>
+            <Setter Property="StrokeLineCap" Value="Round"/>
+            <Setter Property="StrokeDashArray" Value="0.1,4"/>
+            <Setter Property="Stroke" Value="#664D9FFF"/>
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.6"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Path.edgeFlow.fIdle">
+            <Setter Property="Opacity" Value="0.35"/>
+            <Setter Property="Stroke" Value="#664D9FFF"/>
+            <Style.Animations>
+                <Animation Duration="0:0:3" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="StrokeDashOffset" Value="4.1"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="StrokeDashOffset" Value="0"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Path.edgeFlow.fLow">
+            <Setter Property="Opacity" Value="0.65"/>
+            <Setter Property="Stroke" Value="#8C4D9FFF"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1.9" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="StrokeDashOffset" Value="4.1"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="StrokeDashOffset" Value="0"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Path.edgeFlow.fMed">
+            <Setter Property="Opacity" Value="0.85"/>
+            <Setter Property="Stroke" Value="#A64D9FFF"/>
+            <Style.Animations>
+                <Animation Duration="0:0:1.2" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="StrokeDashOffset" Value="4.1"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="StrokeDashOffset" Value="0"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Path.edgeFlow.fHigh">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Stroke" Value="#C24D9FFF"/>
+            <Style.Animations>
+                <Animation Duration="0:0:0.65" IterationCount="Infinite">
+                    <KeyFrame Cue="0%"><Setter Property="StrokeDashOffset" Value="4.1"/></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="StrokeDashOffset" Value="0"/></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+
+        <Style Selector="TextBlock.legend">
+            <Setter Property="FontSize" Value="10.5"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBlock.learnBody">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="18"/>
+        </Style>
+        <Style Selector="Border.learnClose">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.learnClose:pointerover">
+            <Setter Property="Background" Value="#14FFFFFF"/>
+        </Style>
+        <Style Selector="Border.legendDot">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="32,28,32,24">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="pageTitle" Text="Action Flow"/>
+            <TextBlock Classes="pageSubtitle" Text="How the selected application interacts with your operating system, live."/>
+        </StackPanel>
+
+        <Panel Grid.Row="1" Margin="0,10,0,0">
+
+            <!-- Empty / exited state -->
+            <StackPanel x:Name="EmptyState" Spacing="14" MaxWidth="400"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Classes="placeholderIconBox">
+                    <Viewbox Width="20" Height="20"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path Width="24" Height="24" Classes="pageIcon"
+                              Data="{StaticResource IconFlow}"/>
+                    </Viewbox>
+                </Border>
+                <TextBlock x:Name="EmptyTitle" Classes="placeholderTitle"
+                           Text="No process selected"/>
+                <TextBlock x:Name="EmptyBody" Classes="placeholderBody"
+                           Text="Open the Processes page and select an application to watch how it flows through the CPU, memory, disk and network."/>
+            </StackPanel>
+
+            <!-- Flow diagram -->
+            <ScrollViewer x:Name="FlowView" IsVisible="False"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                <Border x:Name="DiagramRoot" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Margin="0,4,0,4" Opacity="0"
+                        RenderTransform="scale(0.98)" RenderTransformOrigin="50%,50%">
+                    <Border.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.25"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                        </Transitions>
+                    </Border.Transitions>
+                    <Canvas Width="560" Height="588">
+
+                        <!-- Edges (faint base line + activity-driven particles) -->
+                        <Path Classes="edgeBase" Data="M280 104 L280 164"/>
+                        <Path x:Name="FlowCpuEdge" Classes="edgeFlow" Data="M280 104 L280 164"/>
+                        <Path Classes="edgeBase" Data="M280 260 L280 320"/>
+                        <Path x:Name="FlowMemoryEdge" Classes="edgeFlow" Data="M280 260 L280 320"/>
+                        <Path Classes="edgeBase" Data="M280 416 C280 452 150 446 150 476"/>
+                        <Path x:Name="FlowDiskEdge" Classes="edgeFlow" Data="M280 416 C280 452 150 446 150 476"/>
+                        <Path Classes="edgeBase" Data="M280 416 C280 452 410 446 410 476"/>
+                        <Path x:Name="FlowNetworkEdge" Classes="edgeFlow" Data="M280 416 C280 452 410 446 410 476"/>
+
+                        <!-- Nodes -->
+                        <controls:FlowNode x:Name="ProcessNode" Canvas.Left="185" Canvas.Top="0"
+                                           Title="Selected Process"
+                                           Icon="{StaticResource IconAppWindow}"
+                                           ShowQuality="False"/>
+                        <controls:FlowNode x:Name="CpuNode" Canvas.Left="185" Canvas.Top="156"
+                                           Title="CPU Activity"
+                                           Icon="{StaticResource IconGauge}"/>
+                        <controls:FlowNode x:Name="MemoryNode" Canvas.Left="185" Canvas.Top="312"
+                                           Title="Memory Usage"
+                                           Icon="{StaticResource IconMemChip}"/>
+                        <controls:FlowNode x:Name="DiskNode" Canvas.Left="55" Canvas.Top="476"
+                                           Title="Disk Activity"
+                                           Icon="{StaticResource IconDisk}"/>
+                        <controls:FlowNode x:Name="NetworkNode" Canvas.Left="315" Canvas.Top="476"
+                                           Title="Network Activity"
+                                           Icon="{StaticResource IconGlobe}"/>
+                    </Canvas>
+                </Border>
+            </ScrollViewer>
+        </Panel>
+
+        <!-- Explanation panel -->
+        <Border Grid.Row="2" x:Name="ExplanationCard" Classes="metricCard"
+                Padding="16,13" MaxWidth="720" HorizontalAlignment="Stretch"
+                Margin="0,14,0,0" IsVisible="False">
+            <Grid ColumnDefinitions="Auto,*">
+                <Border Width="30" Height="30" CornerRadius="9" VerticalAlignment="Center"
+                        Background="{StaticResource BrushAccentSoft}"
+                        BorderBrush="{StaticResource BrushAccentBorder}" BorderThickness="1">
+                    <Viewbox Width="15" Height="15"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Path x:Name="ExplanationIcon" Width="24" Height="24" Classes="metricIcon"
+                              Data="{StaticResource IconBulb}"/>
+                    </Viewbox>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" Spacing="3"
+                            VerticalAlignment="Center">
+                    <TextBlock Classes="sectionLabel" Text="WHAT'S HAPPENING"/>
+                    <TextBlock x:Name="ExplanationText" FontSize="12.5"
+                               Foreground="{StaticResource BrushTextSecondary}"
+                               TextWrapping="Wrap" LineHeight="18">
+                        <TextBlock.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.22" Easing="CubicEaseOut"/>
+                            </Transitions>
+                        </TextBlock.Transitions>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Badge legend -->
+        <StackPanel Grid.Row="3" x:Name="LegendBar" Orientation="Horizontal" Spacing="16"
+                    HorizontalAlignment="Center" Margin="0,12,0,0" IsVisible="False">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Border Classes="legendDot" Background="#3FBF7F"/>
+                <TextBlock Classes="legend" Text="Measured — read directly from the kernel"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Border Classes="legendDot" Background="#4D9FFF"/>
+                <TextBlock Classes="legend" Text="Calculated — smoothed by the OS"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <Border Classes="legendDot" Background="#808A9C"/>
+                <TextBlock Classes="legend" Text="Unavailable — not exposed by macOS"/>
+            </StackPanel>
+            <TextBlock Classes="legend" Text="·  Hover any node to learn more"/>
+            <TextBlock x:Name="LearnHint" Classes="legend" IsVisible="False"
+                       Text="·  Learn Mode: click any node to explore it"/>
+        </StackPanel>
+    </Grid>
+
+    <!-- Learn Mode side panel (slides in from the right) -->
+    <Border x:Name="LearnPanel" Width="330"
+            HorizontalAlignment="Right" VerticalAlignment="Stretch"
+            Margin="0,16,0,16"
+            Background="#181C26"
+            BorderBrush="{StaticResource BrushHairline}" BorderThickness="1"
+            CornerRadius="14,0,0,14"
+            BoxShadow="-10 0 30 0 #66000000"
+            Opacity="0" IsHitTestVisible="False"
+            RenderTransform="translateX(380px)">
+        <Border.Transitions>
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.22" Easing="CubicEaseOut"/>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+            </Transitions>
+        </Border.Transitions>
+        <Grid RowDefinitions="Auto,*">
+            <Grid ColumnDefinitions="*,Auto" Margin="18,16,14,8">
+                <TextBlock x:Name="LearnTitle" FontSize="17" FontWeight="SemiBold"
+                           Foreground="{StaticResource BrushTextPrimary}"
+                           VerticalAlignment="Center"/>
+                <Border Grid.Column="1" Classes="learnClose"
+                        PointerPressed="OnLearnClosePressed">
+                    <TextBlock Text="✕" FontSize="12"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Foreground="{StaticResource BrushTextSecondary}"/>
+                </Border>
+            </Grid>
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="LearnContentHost" Margin="18,4,18,18" Spacing="16">
+                    <StackPanel.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="CubicEaseOut"/>
+                        </Transitions>
+                    </StackPanel.Transitions>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="sectionLabel" Text="WHAT IS HAPPENING?"/>
+                        <TextBlock x:Name="LearnWhatHappening" Classes="learnBody"/>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="sectionLabel" Text="WHAT DOES THIS COMPONENT DO?"/>
+                        <TextBlock x:Name="LearnWhatItDoes" Classes="learnBody"/>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="sectionLabel" Text="WHY IS THIS HAPPENING?"/>
+                        <TextBlock x:Name="LearnWhy" Classes="learnBody"/>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="sectionLabel" Text="SHOULD I WORRY?"/>
+                        <TextBlock x:Name="LearnWorry" Classes="learnBody"/>
+                    </StackPanel>
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="sectionLabel" Text="LEARN MORE"/>
+                        <WrapPanel x:Name="LearnMoreWrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+    </Panel>
+</UserControl>

@@ -39,8 +39,10 @@ public sealed class LearnContentService : ILearnContentService
         {
             ProcessStatus.Running =>
                 $"{s.Name} is active right now — the operating system is giving it turns on the processor so it can do its work.",
-            ProcessStatus.Sleeping or ProcessStatus.Idle =>
-                $"{s.Name} is loaded and ready, but currently waiting for something to happen — like your next click, or a message from another program.",
+            ProcessStatus.Sleeping or ProcessStatus.Idle or ProcessStatus.Waiting =>
+                $"{s.Name} is sleeping — loaded and ready, but waiting for work such as your next click or a message from "
+                + "another program. It stays fully in memory so it can wake and respond instantly; that memory is retained "
+                + "on purpose, not wasted. This is how most programs spend most of their time, and it is completely normal.",
             ProcessStatus.Stopped =>
                 $"{s.Name} has been paused — the system or a debugger told it to stop and wait.",
             ProcessStatus.Zombie =>

@@ -31,7 +31,7 @@ public partial class MainWindow : Window
     private readonly SystemStoryService _story;
     private readonly InsightService _insights;
     private readonly MetricHistoryService _history;
-    private ILearnContentService? _learnContent;
+    private readonly ILearnContentService _learnContent;
     private bool _syncingNav;
     private bool _onboardingSelectionPending;
     private int _tourVersion;
@@ -51,6 +51,7 @@ public partial class MainWindow : Window
         _insights.EnsureStarted(); // pure subscription on top of already-running services
         _history = new MetricHistoryService(_metrics, _processes);
         _history.EnsureStarted(); // rolling in-memory history from launch, same sources
+        _learnContent = new LearnContentService(_metrics.StaticInfo.TotalMemoryBytes); // shared by Action Flow + Processes
         SelectNav("live"); // Learning sits above Live View, but the dashboard stays the start page
 
         Onboarding.StartLearningRequested += OnOnboardingStartLearning;
@@ -324,13 +325,13 @@ public partial class MainWindow : Window
                 return new LearningPage(_lessons, StartLesson);
             case "processes":
                 _processes.EnsureStarted();
-                return new ProcessExplorerPage(_processes, _processSelection, _metrics.StaticInfo.TotalMemoryBytes);
+                return new ProcessExplorerPage(_processes, _processSelection, _learnContent,
+                    _metrics.StaticInfo.TotalMemoryBytes);
             case "timeline":
                 _story.EnsureStarted();
                 return new TimelinePage(_story, _insights, OpenTimelineStory);
             case "flow":
                 _flow.EnsureStarted();
-                _learnContent ??= new LearnContentService(_metrics.StaticInfo.TotalMemoryBytes);
                 return new ActionFlowPage(_flow, _explanations, _learnMode, _learnContent,
                     _metrics.StaticInfo.TotalMemoryBytes);
             case "metrics":

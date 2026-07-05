@@ -5,6 +5,8 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using InsideOS.Services.ActionFlow;
+using InsideOS.Services.Learning;
 using InsideOS.Services.Processes;
 using InsideOS.Services.SystemMetrics;
 using InsideOS.ViewModels;
@@ -13,31 +15,58 @@ namespace InsideOS.Pages;
 
 public partial class ProcessExplorerPage : UserControl
 {
-    private enum SortColumn { Name, Cpu, Memory }
+    // Smart is the default: it surfaces active and user apps and lets sleeping
+    // system processes settle to the bottom without hiding them.
+    private enum SortColumn { Smart, Name, Cpu, Memory }
 
     private readonly ProcessSelection _selection;
+    private readonly ILearnContentService _learnContent;
     private readonly ulong _totalMemoryBytes;
     private readonly Dictionary<int, ProcessRowViewModel> _rowsByPid = new();
     private readonly ObservableCollection<ProcessRowViewModel> _rows = new();
 
     private IReadOnlyList<ProcessSample>? _latestSamples;
-    private SortColumn _sortColumn = SortColumn.Cpu;
+    private SortColumn _sortColumn = SortColumn.Smart;
     private bool _sortDescending = true;
+    private ProcessFilter _filter = ProcessFilter.All;
+    private bool _attached;
 
-    public ProcessExplorerPage(ProcessMonitorService monitor, ProcessSelection selection, ulong totalMemoryBytes)
+    public ProcessExplorerPage(
+        ProcessMonitorService monitor,
+        ProcessSelection selection,
+        ILearnContentService learnContent,
+        ulong totalMemoryBytes)
     {
         InitializeComponent();
         _selection = selection;
+        _learnContent = learnContent;
         _totalMemoryBytes = totalMemoryBytes;
         ProcessList.ItemsSource = _rows;
         monitor.ProcessesUpdated += OnProcessesUpdated;
+    }
+
+    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _attached = true;
+        RefreshRows(); // catch up on anything that changed while hidden
+    }
+
+    protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        // Suspend UI work while hidden. Crucially, this also stops a background
+        // refresh from nulling the shared process selection (which drives Action
+        // Flow) if the selected process happens to exit while another page is up.
+        _attached = false;
     }
 
     private void OnProcessesUpdated(IReadOnlyList<ProcessSample> samples) =>
         Dispatcher.UIThread.Post(() =>
         {
             _latestSamples = samples;
-            RefreshRows();
+            if (_attached)
+                RefreshRows();
         });
 
     private void RefreshRows()
@@ -68,7 +97,8 @@ public partial class ProcessExplorerPage : UserControl
         }
 
         string? query = SearchBox.Text?.Trim();
-        IEnumerable<ProcessRowViewModel> visible = _rowsByPid.Values;
+        IEnumerable<ProcessRowViewModel> visible = _rowsByPid.Values
+            .Where(r => r.MatchesFilter(_filter));
         if (!string.IsNullOrEmpty(query))
             visible = visible.Where(r => r.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
 
@@ -84,6 +114,12 @@ public partial class ProcessExplorerPage : UserControl
     private IEnumerable<ProcessRowViewModel> SortRows(IEnumerable<ProcessRowViewModel> rows) =>
         (_sortColumn, _sortDescending) switch
         {
+            // Smart: activity buckets first, then CPU, then memory as tie-breaks.
+            (SortColumn.Smart, _) => rows
+                .OrderByDescending(r => r.SmartTier)
+                .ThenByDescending(r => r.SortCpu)
+                .ThenByDescending(r => r.SortMemory)
+                .ThenBy(r => r.Pid),
             (SortColumn.Cpu, true) => rows.OrderByDescending(r => r.SortCpu).ThenBy(r => r.Pid),
             (SortColumn.Cpu, false) => rows.OrderBy(r => r.SortCpu).ThenBy(r => r.Pid),
             (SortColumn.Memory, true) => rows.OrderByDescending(r => r.SortMemory).ThenBy(r => r.Pid),
@@ -91,6 +127,20 @@ public partial class ProcessExplorerPage : UserControl
             (SortColumn.Name, false) => rows.OrderBy(r => r.Name, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.Pid),
             _ => rows.OrderByDescending(r => r.Name, StringComparer.OrdinalIgnoreCase).ThenBy(r => r.Pid),
         };
+
+    private void OnFilterPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Border { Tag: string tag } pill
+            || !Enum.TryParse<ProcessFilter>(tag, out var filter))
+            return;
+        e.Handled = true;
+        _filter = filter;
+        foreach (var child in FilterBar.Children)
+            if (child is Border other)
+                other.Classes.Remove("selected");
+        pill.Classes.Add("selected");
+        RefreshRows();
+    }
 
     /// <summary>
     /// Reconciles the bound collection with the desired order using minimal
@@ -123,7 +173,12 @@ public partial class ProcessExplorerPage : UserControl
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         UpdateDetails();
-        _selection.Select((ProcessList.SelectedItem as ProcessRowViewModel)?.LatestSample);
+        // Only propagate a real user pick. When the ListBox selection clears
+        // because the page is being hidden (detach) or the selected row was
+        // filtered out, keep the shared selection so Action Flow keeps showing
+        // the process the user was inspecting instead of going blank.
+        if ((ProcessList.SelectedItem as ProcessRowViewModel)?.LatestSample is { } sample)
+            _selection.Select(sample);
     }
 
     private void UpdateDetails()
@@ -142,9 +197,10 @@ public partial class ProcessExplorerPage : UserControl
         DetailName.Text = sample.Name;
         DetailStatusText.Text = ProcessRowViewModel.StatusLabel(sample.Status);
         DetailStatusDot.Fill = ProcessRowViewModel.BrushForStatus(sample.Status);
+        DetailKind.Text = row.IsUserApplication ? "Your application" : "System process";
         DetailPid.Text = sample.Pid.ToString();
-        DetailThreads.Text = sample.ThreadCount?.ToString() ?? "—";
-        DetailStart.Text = sample.StartTime is { } start ? FormatStart(start) : "—";
+        DetailThreads.Text = sample.ThreadCount?.ToString() ?? "Not available";
+        DetailStart.Text = sample.StartTime is { } start ? FormatStart(start) : "Not available";
 
         if (sample.CpuPercent is { } cpu)
         {
@@ -174,7 +230,33 @@ public partial class ProcessExplorerPage : UserControl
             DetailMemoryBar.Value = 0;
             DetailMemoryShare.Text = "";
         }
+
+        // "What this means" — reuse the learning content engine so a sleeping
+        // process, say, is explained rather than left to alarm. Feeds it a
+        // snapshot built from the sample (disk/network aren't sampled here).
+        var snapshot = BuildSnapshot(sample);
+        DetailWhatLabel.Text = row.IsSleeping ? "WHAT “SLEEPING” MEANS" : "WHAT THIS MEANS";
+        DetailWhy.Text = _learnContent.DescribeWhy(LearnTopicId.Process, snapshot);
+        DetailWorry.Text = _learnContent.DescribeWorry(LearnTopicId.Process, snapshot);
+
+        // Explain missing values instead of leaving a bare dash.
+        bool restricted = sample.ThreadCount is null || sample.StartTime is null;
+        DetailUnavailableNote.IsVisible = restricted;
+        if (restricted)
+            DetailUnavailableNote.Text =
+                "Thread count and start time aren't shown for this process because macOS only "
+                + "reveals those details for applications you own — reading them for other "
+                + "processes would require administrator access.";
     }
+
+    private static ProcessFlowSnapshot BuildSnapshot(ProcessSample s) => new(
+        s.Pid, s.Name, s.Status,
+        new FlowMetric(s.CpuPercent, s.CpuIsPrecise ? MetricQuality.Measured : MetricQuality.Calculated),
+        new FlowMetric(s.MemoryBytes is { } m ? m : null, MetricQuality.Measured),
+        new FlowMetric(null, MetricQuality.Unavailable),
+        new FlowMetric(null, MetricQuality.Unavailable),
+        null, null, null, null,
+        ProcessExited: false);
 
     private static string FormatStart(DateTime start)
     {

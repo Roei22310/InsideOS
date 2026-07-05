@@ -6,6 +6,15 @@ using InsideOS.Services.SystemMetrics;
 
 namespace InsideOS.ViewModels;
 
+/// <summary>How the process list is filtered. Ordered from broadest to narrowest.</summary>
+public enum ProcessFilter
+{
+    All,
+    Running,
+    RecentlyActive,
+    Sleeping,
+}
+
 /// <summary>
 /// Bindable row for the process list. Instances live as long as their process
 /// does; per-second updates mutate properties in place (raising change
@@ -15,6 +24,12 @@ namespace InsideOS.ViewModels;
 public sealed class ProcessRowViewModel : INotifyPropertyChanged
 {
     private const double CpuBarFullWidth = 44;
+
+    // "Active" = measurably using a core; "recently active" remembers a burst
+    // for a short window so a process that just did work doesn't instantly sink.
+    private const double ActiveCpuThreshold = 5;
+    private const double RunningCpuThreshold = 1;
+    private const int RecentlyActiveWindowTicks = 12;
 
     public static readonly IBrush LoadNormal = new SolidColorBrush(Color.Parse("#4D9FFF"));
     public static readonly IBrush LoadWarn = new SolidColorBrush(Color.Parse("#E8B44C"));
@@ -55,6 +70,50 @@ public sealed class ProcessRowViewModel : INotifyPropertyChanged
     public ulong SortMemory { get; private set; }
     public ProcessSample LatestSample { get; private set; }
 
+    private int _recentlyActiveTicks;
+
+    /// <summary>Using a measurable share of a core right now.</summary>
+    public bool IsCurrentlyActive => SortCpu >= ActiveCpuThreshold;
+
+    /// <summary>Doing at least a little processor work right now.</summary>
+    public bool IsRunningNow => SortCpu >= RunningCpuThreshold || LatestSample.Status == ProcessStatus.Running;
+
+    /// <summary>Was active within the last few seconds (smoothes brief bursts).</summary>
+    public bool WasRecentlyActive => _recentlyActiveTicks > 0;
+
+    /// <summary>An OS-level sleeping/idle/waiting state — loaded but not working.</summary>
+    public bool IsSleeping => LatestSample.Status is ProcessStatus.Sleeping
+        or ProcessStatus.Idle or ProcessStatus.Waiting;
+
+    /// <summary>
+    /// A process this user owns (a "user application") rather than a system
+    /// daemon. macOS only exposes thread/start details for our own processes,
+    /// and only own-user CPU can be sampled precisely — so either signal is a
+    /// reliable, honest proxy without inventing anything.
+    /// </summary>
+    public bool IsUserApplication => LatestSample.CpuIsPrecise
+        || LatestSample.ThreadCount is not null
+        || LatestSample.StartTime is not null;
+
+    /// <summary>
+    /// Priority bucket for smart sorting: currently active first, then recently
+    /// active, then the user's own idle apps, then everything else. Within a
+    /// bucket the page tie-breaks by CPU and memory.
+    /// </summary>
+    public int SmartTier =>
+        IsCurrentlyActive ? 3
+        : WasRecentlyActive ? 2
+        : IsUserApplication ? 1
+        : 0;
+
+    public bool MatchesFilter(ProcessFilter filter) => filter switch
+    {
+        ProcessFilter.Running => IsRunningNow,
+        ProcessFilter.RecentlyActive => WasRecentlyActive,
+        ProcessFilter.Sleeping => IsSleeping,
+        _ => true,
+    };
+
     public ProcessRowViewModel(ProcessSample sample)
     {
         Pid = sample.Pid;
@@ -75,12 +134,18 @@ public sealed class ProcessRowViewModel : INotifyPropertyChanged
             CpuText = $"{cpu:0.0}%";
             CpuBarWidth = System.Math.Clamp(cpu, 0, 100) / 100 * CpuBarFullWidth;
             CpuBarBrush = BrushForLoad(cpu);
+            if (cpu >= ActiveCpuThreshold)
+                _recentlyActiveTicks = RecentlyActiveWindowTicks;
+            else if (_recentlyActiveTicks > 0)
+                _recentlyActiveTicks--;
         }
         else
         {
             SortCpu = -1;
             CpuText = "—";
             CpuBarWidth = 0;
+            if (_recentlyActiveTicks > 0)
+                _recentlyActiveTicks--;
         }
 
         if (sample.MemoryBytes is { } memory)

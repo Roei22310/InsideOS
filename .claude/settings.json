@@ -48,7 +48,8 @@
       "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest13)",
       "Bash(mkdir -p '/Users/roei/Library/Application Support/InsideOS-DriverTest13')",
       "Bash(printf '{\"OnboardingCompleted\":true,\"CompletedLessons\":[\"first-process\"]}')",
-      "Bash(rm -rf /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest13 '/Users/roei/Library/Application Support/InsideOS-DriverTest13')"
+      "Bash(rm -rf /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest13 '/Users/roei/Library/Application Support/InsideOS-DriverTest13')",
+      "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest135)"
     ],
     "additionalDirectories": [
       "/Users/roei/Library/Application Support"

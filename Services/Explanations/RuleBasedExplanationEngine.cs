@@ -211,8 +211,11 @@ public sealed class RuleBasedExplanationEngine : IExplanationEngine
                 "The application is doing some light work — possibly handling small background tasks.",
                 ExplanationKind.Activity));
 
+        // Idle: no measurable CPU. Keep everything on screen and reassure —
+        // the process is still fully loaded and ready, not stuck or broken.
         return ("idle", new Explanation(
-            "The application appears to be idle — probably waiting for something to do. This is normal for most apps most of the time.",
+            "No measurable CPU activity right now — the application appears to be waiting for more work. "
+            + "Its memory stays allocated so it can resume instantly, which is completely normal.",
             ExplanationKind.Idle));
     }
 

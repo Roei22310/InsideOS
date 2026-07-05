@@ -239,14 +239,23 @@ public partial class ProcessExplorerPage : UserControl
         DetailWhy.Text = _learnContent.DescribeWhy(LearnTopicId.Process, snapshot);
         DetailWorry.Text = _learnContent.DescribeWorry(LearnTopicId.Process, snapshot);
 
-        // Explain missing values instead of leaving a bare dash.
-        bool restricted = sample.ThreadCount is null || sample.StartTime is null;
-        DetailUnavailableNote.IsVisible = restricted;
-        if (restricted)
-            DetailUnavailableNote.Text =
-                "Thread count and start time aren't shown for this process because macOS only "
-                + "reveals those details for applications you own — reading them for other "
-                + "processes would require administrator access.";
+        // Explain missing values instead of leaving a bare dash. Word it for
+        // exactly what's missing so it never contradicts the "System process /
+        // Your application" label above.
+        bool threadsMissing = sample.ThreadCount is null;
+        bool startMissing = sample.StartTime is null;
+        DetailUnavailableNote.IsVisible = threadsMissing || startMissing;
+        DetailUnavailableNote.Text = (threadsMissing, startMissing) switch
+        {
+            (true, true) =>
+                "Thread count and start time aren't shown because macOS reveals these details only "
+                + "to a process's owner — reading them for another user's process needs administrator access.",
+            (true, false) =>
+                "Thread count isn't shown because macOS reveals it only to a process's owner — "
+                + "reading it for another user's process needs administrator access.",
+            _ =>
+                "A start time isn't recorded for this process.",
+        };
     }
 
     private static ProcessFlowSnapshot BuildSnapshot(ProcessSample s) => new(

@@ -81,19 +81,26 @@ public sealed class ProcessRowViewModel : INotifyPropertyChanged
     /// <summary>Was active within the last few seconds (smoothes brief bursts).</summary>
     public bool WasRecentlyActive => _recentlyActiveTicks > 0;
 
-    /// <summary>An OS-level sleeping/idle/waiting state — loaded but not working.</summary>
-    public bool IsSleeping => LatestSample.Status is ProcessStatus.Sleeping
-        or ProcessStatus.Idle or ProcessStatus.Waiting;
+    /// <summary>
+    /// A genuinely dormant process: in an OS sleep state AND not doing
+    /// measurable work. The CPU condition keeps this disjoint from
+    /// <see cref="IsRunningNow"/> — macOS reports most active processes as
+    /// "sleeping" between scheduler quanta, so a status check alone would let a
+    /// busy process show up under both Running and Sleeping.
+    /// </summary>
+    public bool IsSleeping =>
+        (LatestSample.Status is ProcessStatus.Sleeping or ProcessStatus.Idle or ProcessStatus.Waiting)
+        && SortCpu < RunningCpuThreshold;
 
     /// <summary>
     /// A process this user owns (a "user application") rather than a system
-    /// daemon. macOS only exposes thread/start details for our own processes,
-    /// and only own-user CPU can be sampled precisely — so either signal is a
-    /// reliable, honest proxy without inventing anything.
+    /// daemon. Only libproc-derived values are reliable ownership signals:
+    /// macOS exposes an exact CPU delta and thread count only for our own
+    /// processes. (Start time is NOT a signal — ps reports it for every
+    /// process, so it would misclassify root daemons as user apps.)
     /// </summary>
     public bool IsUserApplication => LatestSample.CpuIsPrecise
-        || LatestSample.ThreadCount is not null
-        || LatestSample.StartTime is not null;
+        || LatestSample.ThreadCount is not null;
 
     /// <summary>
     /// Priority bucket for smart sorting: currently active first, then recently

@@ -28,7 +28,6 @@ public sealed class ProcessRowViewModel : INotifyPropertyChanged
     // "Active" = measurably using a core; "recently active" remembers a burst
     // for a short window so a process that just did work doesn't instantly sink.
     private const double ActiveCpuThreshold = 5;
-    private const double RunningCpuThreshold = 1;
     private const int RecentlyActiveWindowTicks = 12;
 
     public static readonly IBrush LoadNormal = new SolidColorBrush(Color.Parse("#4D9FFF"));
@@ -75,22 +74,20 @@ public sealed class ProcessRowViewModel : INotifyPropertyChanged
     /// <summary>Using a measurable share of a core right now.</summary>
     public bool IsCurrentlyActive => SortCpu >= ActiveCpuThreshold;
 
-    /// <summary>Doing at least a little processor work right now.</summary>
-    public bool IsRunningNow => SortCpu >= RunningCpuThreshold || LatestSample.Status == ProcessStatus.Running;
+    /// <summary>Doing processor work across the current sample window.
+    /// Derived from the same <see cref="ProcessSample.EffectiveStatus"/> the
+    /// STATUS column displays, so the filter and the visible label can never
+    /// disagree.</summary>
+    public bool IsRunningNow => LatestSample.EffectiveStatus == ProcessStatus.Running;
 
     /// <summary>Was active within the last few seconds (smoothes brief bursts).</summary>
     public bool WasRecentlyActive => _recentlyActiveTicks > 0;
 
-    /// <summary>
-    /// A genuinely dormant process: in an OS sleep state AND not doing
-    /// measurable work. The CPU condition keeps this disjoint from
-    /// <see cref="IsRunningNow"/> — macOS reports most active processes as
-    /// "sleeping" between scheduler quanta, so a status check alone would let a
-    /// busy process show up under both Running and Sleeping.
-    /// </summary>
-    public bool IsSleeping =>
-        (LatestSample.Status is ProcessStatus.Sleeping or ProcessStatus.Idle or ProcessStatus.Waiting)
-        && SortCpu < RunningCpuThreshold;
+    /// <summary>Genuinely dormant over the sample window — same single source
+    /// of truth as the displayed label, so Running and Sleeping stay disjoint
+    /// by construction.</summary>
+    public bool IsSleeping => LatestSample.EffectiveStatus
+        is ProcessStatus.Sleeping or ProcessStatus.Idle or ProcessStatus.Waiting;
 
     /// <summary>
     /// A process this user owns (a "user application") rather than a system
@@ -166,8 +163,8 @@ public sealed class ProcessRowViewModel : INotifyPropertyChanged
             MemoryText = "—";
         }
 
-        StatusText = StatusLabel(sample.Status);
-        StatusBrush = BrushForStatus(sample.Status);
+        StatusText = StatusLabel(sample.EffectiveStatus);
+        StatusBrush = BrushForStatus(sample.EffectiveStatus);
     }
 
     public static IBrush BrushForLoad(double cpuPercent) =>

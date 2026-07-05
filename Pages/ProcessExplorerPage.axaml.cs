@@ -195,8 +195,8 @@ public partial class ProcessExplorerPage : UserControl
         DetailsContent.IsVisible = true;
 
         DetailName.Text = sample.Name;
-        DetailStatusText.Text = ProcessRowViewModel.StatusLabel(sample.Status);
-        DetailStatusDot.Fill = ProcessRowViewModel.BrushForStatus(sample.Status);
+        DetailStatusText.Text = ProcessRowViewModel.StatusLabel(sample.EffectiveStatus);
+        DetailStatusDot.Fill = ProcessRowViewModel.BrushForStatus(sample.EffectiveStatus);
         DetailKind.Text = row.IsUserApplication ? "Your application" : "System process";
         DetailPid.Text = sample.Pid.ToString();
         DetailThreads.Text = sample.ThreadCount?.ToString() ?? "Not available";
@@ -259,7 +259,7 @@ public partial class ProcessExplorerPage : UserControl
     }
 
     private static ProcessFlowSnapshot BuildSnapshot(ProcessSample s) => new(
-        s.Pid, s.Name, s.Status,
+        s.Pid, s.Name, s.EffectiveStatus, // per-second snapshot carries the per-second state
         new FlowMetric(s.CpuPercent, s.CpuIsPrecise ? MetricQuality.Measured : MetricQuality.Calculated),
         new FlowMetric(s.MemoryBytes is { } m ? m : null, MetricQuality.Measured),
         new FlowMetric(null, MetricQuality.Unavailable),

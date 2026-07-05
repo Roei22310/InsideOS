@@ -121,7 +121,7 @@ public sealed class ProcessFlowMonitor : IDisposable
             var (network, netIn, netOut) = await SampleNetworkAsync(pid, now, ct);
 
             FlowUpdated?.Invoke(new ProcessFlowSnapshot(
-                pid, sample.Name, sample.Status,
+                pid, sample.Name, sample.EffectiveStatus, // per-second snapshot → per-second state
                 cpu, memory, disk, network,
                 diskRead, diskWrite, netIn, netOut,
                 ProcessExited: false));

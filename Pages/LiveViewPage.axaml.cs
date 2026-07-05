@@ -193,11 +193,11 @@ public partial class LiveViewPage : UserControl
             }
             SetText(ActiveCpu, $"{top.CpuPercent:0.0}%");
             SetText(ActiveMem, top.MemoryBytes is { } m ? Format.Bytes(m) : "—");
-            ActiveStatusDot.Fill = ProcessRowViewModel.BrushForStatus(top.Status);
-            SetText(ActiveStatus, ProcessRowViewModel.StatusLabel(top.Status));
+            ActiveStatusDot.Fill = ProcessRowViewModel.BrushForStatus(top.EffectiveStatus);
+            SetText(ActiveStatus, ProcessRowViewModel.StatusLabel(top.EffectiveStatus));
 
             var explanation = _explainer.Explain(new ProcessFlowSnapshot(
-                top.Pid, top.Name, top.Status,
+                top.Pid, top.Name, top.EffectiveStatus,
                 new FlowMetric(top.CpuPercent,
                     top.CpuIsPrecise ? MetricQuality.Measured : MetricQuality.Calculated),
                 new FlowMetric(top.MemoryBytes is { } mb ? mb : null, MetricQuality.Measured),
@@ -218,7 +218,8 @@ public partial class LiveViewPage : UserControl
 
         // Current activity narrative — counted, never invented.
         int active = samples.Count(s => (s.CpuPercent ?? 0) >= 5);
-        int sleeping = samples.Count(s => s.Status == ProcessStatus.Sleeping);
+        int sleeping = samples.Count(s => s.EffectiveStatus
+            is ProcessStatus.Sleeping or ProcessStatus.Idle or ProcessStatus.Waiting);
         SetText(ActivityLine1, top is null
             ? "Watching processes…"
             : $"{top.Name} is currently the most active process.");

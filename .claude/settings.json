@@ -52,7 +52,22 @@
       "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest135)",
       "Bash(ps -axo pid,state,%cpu,comm)",
       "Bash(awk '$3 > 5 {print}')",
-      "Bash(awk '$2 ~ /^R/ {print}')"
+      "Bash(awk '$2 ~ /^R/ {print}')",
+      "Bash(ps -axo pid=,ppid=,etime=,pcpu=,command=)",
+      "Bash(ps -axo pid=,ppid=,command=)",
+      "Bash(ps -p 82621 -o pid=,etime=,pcpu=,rss=)",
+      "Bash(top -l 2 -pid 82621 -stats pid,cpu,mem)",
+      "Bash(top -l 5 -s 1 -pid 82621 -stats pid,cpu)",
+      "Bash(kill 82621)",
+      "Bash(kill 82619)",
+      "Bash(ps -axo pid=,ppid=,etime=,command=)",
+      "Bash(ps -p 83675 -o pid=,etime=,pcpu=,rss=)",
+      "Bash(ps -p 80083 -o pid=,etime=,pcpu=,rss=)",
+      "Bash(top -l 4 -s 1 -pid 83675 -pid 80083 -stats pid,cpu)",
+      "Bash(kill 83675)",
+      "Bash(kill 83589)",
+      "Bash(pkill -P 83589)",
+      "Bash(top -l 4 -s 1 -pid 80083 -stats pid,cpu,mem)"
     ],
     "additionalDirectories": [
       "/Users/roei/Library/Application Support"

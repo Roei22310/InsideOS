@@ -43,7 +43,30 @@ public partial class ProcessExplorerPage : UserControl
         _totalMemoryBytes = totalMemoryBytes;
         ProcessList.ItemsSource = _rows;
         monitor.ProcessesUpdated += OnProcessesUpdated;
+        UpdateFilterHint();
     }
+
+    /// <summary>
+    /// One honest sentence describing what the current filter selects, phrased
+    /// in the operating system's own terms. This turns the pills into a small
+    /// lesson: the difference between "running over the last second", a fading
+    /// recent burst, and a process that is simply loaded and waiting.
+    /// </summary>
+    private void UpdateFilterHint() => FilterHint.Text = _filter switch
+    {
+        ProcessFilter.Running =>
+            "Running — used measurable processor time over the last second. macOS reports even a busy "
+            + "process as “sleeping” at any single instant, so this looks across the whole second.",
+        ProcessFilter.RecentlyActive =>
+            "Recently Active — worked hard within the last few seconds, then went quiet. Kept here "
+            + "briefly so a short burst doesn’t disappear the moment it ends.",
+        ProcessFilter.Sleeping =>
+            "Sleeping — loaded and waiting for something to do. It stays in memory so it can respond "
+            + "instantly; this is completely normal.",
+        _ =>
+            "Every process the operating system is currently managing — from your own apps to the "
+            + "background system services that keep macOS running.",
+    };
 
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
     {
@@ -139,6 +162,7 @@ public partial class ProcessExplorerPage : UserControl
             if (child is Border other)
                 other.Classes.Remove("selected");
         pill.Classes.Add("selected");
+        UpdateFilterHint();
         RefreshRows();
     }
 

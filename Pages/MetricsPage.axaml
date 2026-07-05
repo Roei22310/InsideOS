@@ -125,7 +125,10 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Charts -->
+                <!-- Charts, grouped so the eye reads clusters instead of a wall
+                     of identical cards: system load, then network, then storage
+                     and power, then process counts. -->
+                <TextBlock Classes="sectionLabel" Text="PROCESSOR &amp; MEMORY" Margin="2,10,0,0"/>
                 <Grid ColumnDefinitions="*,*">
                     <Border Classes="dashCard" Margin="0,0,6,0">
                         <StackPanel Spacing="6">
@@ -155,6 +158,7 @@
                     </Border>
                 </Grid>
 
+                <TextBlock Classes="sectionLabel" Text="NETWORK" Margin="2,10,0,0"/>
                 <Grid ColumnDefinitions="*,*">
                     <Border Classes="dashCard" Margin="0,0,6,0">
                         <StackPanel Spacing="6">
@@ -184,6 +188,7 @@
                     </Border>
                 </Grid>
 
+                <TextBlock Classes="sectionLabel" Text="STORAGE &amp; POWER" Margin="2,10,0,0"/>
                 <Grid ColumnDefinitions="*,*">
                     <Border Classes="dashCard" Margin="0,0,6,0">
                         <StackPanel Spacing="6">
@@ -220,6 +225,7 @@
                     </Border>
                 </Grid>
 
+                <TextBlock Classes="sectionLabel" Text="PROCESS COUNTS" Margin="2,10,0,0"/>
                 <Grid ColumnDefinitions="*,*">
                     <Border Classes="dashCard" Margin="0,0,6,0">
                         <StackPanel Spacing="6">

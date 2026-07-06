@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -8,11 +9,13 @@ using InsideOS.Services.Narration;
 namespace InsideOS.Pages;
 
 /// <summary>
-/// The Laboratory: explains an experiment before it runs, narrates it while
-/// it runs, and summarizes what was measured afterwards. Pure consumer of
-/// <see cref="LaboratoryService"/> — the page renders state; the service owns
-/// the child process. All copy comes from the experiment definition or from
-/// measured results, so this page stays honest by construction.
+/// The Laboratory: explains each experiment before it runs, narrates it
+/// while it runs, and summarizes what was measured afterwards. Pure consumer
+/// of <see cref="LaboratoryService"/> — the page renders state; the service
+/// owns the child process; the shared Narration Engine interprets results.
+/// Every word on a card comes from the experiment definition or from
+/// measured results, so this page stays honest by construction and knows
+/// nothing about any specific experiment.
 /// </summary>
 public partial class LaboratoryPage : UserControl
 {
@@ -23,28 +26,71 @@ public partial class LaboratoryPage : UserControl
     private static readonly IBrush BodyText = new SolidColorBrush(Color.Parse("#9AA3B4"));
     private static readonly IBrush MutedText = new SolidColorBrush(Color.Parse("#656F82"));
 
+    /// <summary>All controls of one experiment card, bound to one definition.</summary>
+    private sealed class Card
+    {
+        public required ExperimentDefinition Definition;
+        public required TextBlock StateChip, CardTitle;
+        public required StackPanel IdleView, RunningView, DoneView;
+        public required StackPanel WatchList, SummaryList, NoticedList, NoticedBlock;
+        public required TextBlock ElapsedText, ElapsedOfText, PhaseText, LiveCpuText, LiveCpuNote, DoneLabel;
+        public required Button StartButton;
+        public string LastPhaseCaption = "";
+    }
+
     private readonly LaboratoryService _lab;
     private readonly Action<string> _navigate;
-    private readonly ExperimentDefinition _experiment;
+    private readonly List<Card> _cards = new();
     private bool _attached;
-    private string _lastPhaseCaption = "";
 
     public LaboratoryPage(LaboratoryService lab, Action<string> navigate)
     {
         InitializeComponent();
         _lab = lab;
         _navigate = navigate;
-        _experiment = lab.Experiments[0];
 
-        // Static copy comes straight from the definition (reusable for future cards).
-        CardKicker.Text = $"EXPERIMENT · {_experiment.Category}";
-        CardTitle.Text = _experiment.Title;
-        AboutText.Text = _experiment.AboutToObserve;
-        WhyText.Text = _experiment.WhyInteresting;
-        DurationChip.Text = _experiment.DurationText;
-        IntensityChip.Text = _experiment.IntensityText;
-        foreach (var line in _experiment.WhatToWatch)
-            WatchList.Children.Add(Bullet(line, BodyText));
+        // Two cards in XAML, bound to the catalog in order. Future experiments
+        // extend this list (or replace it with a fully templated version).
+        _cards.Add(new Card
+        {
+            Definition = lab.Experiments[0],
+            StateChip = StateChip, CardTitle = CardTitle,
+            IdleView = IdleView, RunningView = RunningView, DoneView = DoneView,
+            WatchList = WatchList, SummaryList = SummaryList,
+            NoticedList = NoticedList, NoticedBlock = NoticedBlock,
+            ElapsedText = ElapsedText, ElapsedOfText = ElapsedOfText, PhaseText = PhaseText,
+            LiveCpuText = LiveCpuText, LiveCpuNote = LiveCpuNote, DoneLabel = DoneLabel,
+            StartButton = StartButton,
+        });
+        _cards.Add(new Card
+        {
+            Definition = lab.Experiments[1],
+            StateChip = StateChip2, CardTitle = CardTitle2,
+            IdleView = IdleView2, RunningView = RunningView2, DoneView = DoneView2,
+            WatchList = WatchList2, SummaryList = SummaryList2,
+            NoticedList = NoticedList2, NoticedBlock = NoticedBlock2,
+            ElapsedText = ElapsedText2, ElapsedOfText = ElapsedOfText2, PhaseText = PhaseText2,
+            LiveCpuText = LiveCpuText2, LiveCpuNote = LiveCpuNote2, DoneLabel = DoneLabel2,
+            StartButton = StartButton2,
+        });
+
+        // Static copy comes straight from the definitions.
+        CardKicker.Text = $"EXPERIMENT · {_cards[0].Definition.Category}";
+        CardKicker2.Text = $"EXPERIMENT · {_cards[1].Definition.Category}";
+        foreach (var card in _cards)
+        {
+            card.CardTitle.Text = card.Definition.Title;
+            foreach (var line in card.Definition.WhatToWatch)
+                card.WatchList.Children.Add(Bullet(line, BodyText));
+        }
+        AboutText.Text = _cards[0].Definition.AboutToObserve;
+        WhyText.Text = _cards[0].Definition.WhyInteresting;
+        DurationChip.Text = _cards[0].Definition.DurationText;
+        IntensityChip.Text = _cards[0].Definition.IntensityText;
+        AboutText2.Text = _cards[1].Definition.AboutToObserve;
+        WhyText2.Text = _cards[1].Definition.WhyInteresting;
+        DurationChip2.Text = _cards[1].Definition.DurationText;
+        IntensityChip2.Text = _cards[1].Definition.IntensityText;
 
         _lab.Changed += OnLabChanged;
         Render();
@@ -54,7 +100,7 @@ public partial class LaboratoryPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _attached = true;
-        Render(); // catch up — the experiment keeps running while the page is hidden
+        Render(); // catch up — an experiment keeps running while the page is hidden
     }
 
     protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -73,67 +119,78 @@ public partial class LaboratoryPage : UserControl
 
     private void Render()
     {
-        if (_lab.RunningDefinition is not null)
-            RenderRunning();
-        else if (_lab.LastResult is { } result && result.ExperimentId == _experiment.Id)
-            RenderDone(result);
-        else
-            RenderIdle();
+        var running = _lab.RunningDefinition;
+        foreach (var card in _cards)
+        {
+            if (ReferenceEquals(running, card.Definition))
+                RenderRunning(card);
+            else if (_lab.LastResult is { } result && result.ExperimentId == card.Definition.Id
+                     && running is null)
+                RenderDone(card, result);
+            else
+                RenderIdle(card, startEnabled: running is null);
+        }
     }
 
-    private void ShowView(Control view, string chip, IBrush? chipBrush)
+    private static void ShowView(Card card, StackPanel view, string chip, IBrush? chipBrush)
     {
-        IdleView.IsVisible = ReferenceEquals(view, IdleView);
-        RunningView.IsVisible = ReferenceEquals(view, RunningView);
-        DoneView.IsVisible = ReferenceEquals(view, DoneView);
-        StateChip.Text = chip;
+        card.IdleView.IsVisible = ReferenceEquals(view, card.IdleView);
+        card.RunningView.IsVisible = ReferenceEquals(view, card.RunningView);
+        card.DoneView.IsVisible = ReferenceEquals(view, card.DoneView);
+        card.StateChip.Text = chip;
         if (chipBrush is not null)
-            StateChip.Foreground = chipBrush;
+            card.StateChip.Foreground = chipBrush;
     }
 
-    private void RenderIdle() => ShowView(IdleView, "", null);
-
-    private void RenderRunning()
+    private static void RenderIdle(Card card, bool startEnabled)
     {
-        ShowView(RunningView, "RUNNING", ChipRunning);
+        ShowView(card, card.IdleView, "", null);
+        // One experiment at a time: other cards wait until the run finishes.
+        card.StartButton.IsEnabled = startEnabled;
+    }
+
+    private void RenderRunning(Card card)
+    {
+        ShowView(card, card.RunningView, "RUNNING", ChipRunning);
 
         var elapsed = _lab.Elapsed;
-        ElapsedText.Text = $"{(int)elapsed.TotalMinutes}:{elapsed.Seconds:00}";
-        var total = _experiment.ExpectedDuration;
-        ElapsedOfText.Text = $"of about {(int)total.TotalMinutes}:{total.Seconds:00}";
+        card.ElapsedText.Text = $"{(int)elapsed.TotalMinutes}:{elapsed.Seconds:00}";
+        var total = card.Definition.ExpectedDuration;
+        card.ElapsedOfText.Text = $"of about {(int)total.TotalMinutes}:{total.Seconds:00}";
 
         // Phase caption: latest one whose time has arrived. Fade only on change.
         string caption = "";
-        foreach (var phase in _experiment.PhaseCaptions)
+        foreach (var phase in card.Definition.PhaseCaptions)
             if (elapsed >= phase.At)
                 caption = phase.Caption;
-        if (caption != _lastPhaseCaption)
+        if (caption != card.LastPhaseCaption)
         {
-            _lastPhaseCaption = caption;
-            PhaseText.Opacity = 0;
+            card.LastPhaseCaption = caption;
+            card.PhaseText.Opacity = 0;
             DispatcherTimer.RunOnce(() =>
             {
-                PhaseText.Text = caption;
-                PhaseText.Opacity = 1;
+                card.PhaseText.Text = caption;
+                card.PhaseText.Opacity = 1;
             }, TimeSpan.FromMilliseconds(160));
         }
 
         if (_lab.LiveWorkerCpu is { } cpu)
         {
-            LiveCpuText.Text = $"{cpu:0.0}% of one core";
-            LiveCpuNote.Text = "Measured directly — macOS reveals exact numbers because InsideOS owns this process.";
+            card.LiveCpuText.Text = $"{cpu:0.0}% of one core";
+            card.LiveCpuNote.Text = "Measured directly — macOS reveals exact numbers because InsideOS owns this process.";
         }
         else
         {
-            LiveCpuText.Text = "—";
-            LiveCpuNote.Text = "Waiting for the first per-second measurement…";
+            card.LiveCpuText.Text = "—";
+            card.LiveCpuNote.Text = "Waiting for the first per-second measurement…";
         }
     }
 
-    private void RenderDone(ExperimentResult result)
+    private static void RenderDone(Card card, ExperimentResult result)
     {
-        SummaryList.Children.Clear();
-        NoticedList.Children.Clear();
+        card.StartButton.IsEnabled = true;
+        card.SummaryList.Children.Clear();
+        card.NoticedList.Children.Clear();
 
         // The shared Narration Engine interprets the run — the same layer
         // that narrates Timeline stories, Insights and Action Flow. This page
@@ -143,39 +200,28 @@ public partial class LaboratoryPage : UserControl
         switch (result.Outcome)
         {
             case ExperimentOutcome.Completed:
-                ShowView(DoneView, "COMPLETED", ChipDone);
-                DoneLabel.Text = "WHAT HAPPENED";
-                NoticedBlock.IsVisible = true;
+                ShowView(card, card.DoneView, "COMPLETED", ChipDone);
+                card.DoneLabel.Text = "WHAT HAPPENED";
+                card.NoticedBlock.IsVisible = true;
 
                 foreach (var evidence in narration.Evidence)
-                    SummaryList.Children.Add(Bullet(evidence.Fact, BodyText));
-
-                NoticedList.Children.Add(Bullet(
-                    "It appeared in Processes as a second “InsideOS” — the operating system identifies "
-                    + "processes by ID, not by name.", MutedText));
-                NoticedList.Children.Add(Bullet(
-                    "Its status read “Sleeping” while it waited, then “Running” once real work began — "
-                    + "that word describes the last second of behavior, not the process's purpose.", MutedText));
-                NoticedList.Children.Add(Bullet(
-                    "The Timeline likely recorded its CPU rise as a story, and Action Flow's particles "
-                    + "sped up while it worked.", MutedText));
-                NoticedList.Children.Add(Bullet(
-                    "When it exited, it vanished from the process list — the operating system reclaimed "
-                    + "its memory and CPU time immediately.", MutedText));
+                    card.SummaryList.Children.Add(Bullet(evidence.Fact, BodyText));
+                foreach (var learned in card.Definition.WhatYouLearned)
+                    card.NoticedList.Children.Add(Bullet(learned, MutedText));
                 break;
 
             case ExperimentOutcome.Stopped:
-                ShowView(DoneView, "STOPPED", ChipStopped);
-                DoneLabel.Text = "WHAT HAPPENED";
-                NoticedBlock.IsVisible = false;
-                SummaryList.Children.Add(Bullet(narration.Summary, BodyText));
+                ShowView(card, card.DoneView, "STOPPED", ChipStopped);
+                card.DoneLabel.Text = "WHAT HAPPENED";
+                card.NoticedBlock.IsVisible = false;
+                card.SummaryList.Children.Add(Bullet(narration.Summary, BodyText));
                 break;
 
             default:
-                ShowView(DoneView, "COULD NOT RUN", ChipFailed);
-                DoneLabel.Text = "WHAT WENT WRONG";
-                NoticedBlock.IsVisible = false;
-                SummaryList.Children.Add(Bullet(narration.Summary, BodyText));
+                ShowView(card, card.DoneView, "COULD NOT RUN", ChipFailed);
+                card.DoneLabel.Text = "WHAT WENT WRONG";
+                card.NoticedBlock.IsVisible = false;
+                card.SummaryList.Children.Add(Bullet(narration.Summary, BodyText));
                 break;
         }
     }
@@ -206,9 +252,15 @@ public partial class LaboratoryPage : UserControl
     // ---- interactions ----
 
     private void OnStart(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
-        _lab.Start(_experiment); // ignored if something is already running
+        _lab.Start(_cards[0].Definition); // ignored if something is already running
+
+    private void OnStart2(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        _lab.Start(_cards[1].Definition);
 
     private void OnStop(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        _lab.Stop();
+
+    private void OnStop2(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         _lab.Stop();
 
     private void OnOpenFlow(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>

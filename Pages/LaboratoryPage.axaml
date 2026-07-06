@@ -55,7 +55,7 @@
 
                 <TextBlock Classes="sectionLabel" Text="EXPERIMENTS" Margin="0,10,0,0"/>
 
-                <!-- The CPU experiment card (three states swapped in code) -->
+                <!-- Experiment cards: one per catalog entry, same structure (states swapped in code) -->
                 <Border Classes="metricCard" Padding="20">
                     <StackPanel Spacing="12">
                         <Grid ColumnDefinitions="*,Auto">
@@ -147,8 +147,100 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Second experiment card (identical structure) -->
+                <Border Classes="metricCard" Padding="20">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock x:Name="CardKicker2"
+                                       FontSize="10.5" FontWeight="SemiBold" LetterSpacing="1.2"
+                                       Foreground="{StaticResource BrushTextMuted}"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="StateChip2" Grid.Column="1"
+                                       FontSize="10.5" FontWeight="SemiBold" LetterSpacing="1"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock x:Name="CardTitle2"
+                                   FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <!-- ===== Idle: explain before running ===== -->
+                        <StackPanel x:Name="IdleView2" Spacing="12">
+                            <TextBlock x:Name="AboutText2" Classes="labBody"/>
+                            <StackPanel Spacing="6">
+                                <TextBlock Classes="sectionLabel" Text="WHY THIS IS INTERESTING"/>
+                                <TextBlock x:Name="WhyText2" Classes="labBody"/>
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Classes="sectionLabel" Text="WHAT TO WATCH"/>
+                                <StackPanel x:Name="WatchList2" Spacing="5"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Classes="metaChip">
+                                    <TextBlock x:Name="DurationChip2"/>
+                                </Border>
+                                <Border Classes="metaChip">
+                                    <TextBlock x:Name="IntensityChip2"/>
+                                </Border>
+                                <Border Classes="metaChip">
+                                    <TextBlock Text="Cleans up automatically"/>
+                                </Border>
+                            </StackPanel>
+                            <Button x:Name="StartButton2" Classes="primary" Content="Start Experiment"
+                                    HorizontalAlignment="Left" Margin="0,2,0,0"
+                                    Click="OnStart2"/>
+                        </StackPanel>
+
+                        <!-- ===== Running: elapsed + phase + live measurement ===== -->
+                        <StackPanel x:Name="RunningView2" Spacing="12" IsVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock x:Name="ElapsedText2"
+                                           FontSize="26" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock x:Name="ElapsedOfText2" FontSize="12.5"
+                                           Foreground="{StaticResource BrushTextMuted}"
+                                           VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            </StackPanel>
+                            <TextBlock x:Name="PhaseText2" Classes="labBody">
+                                <TextBlock.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                                    </Transitions>
+                                </TextBlock.Transitions>
+                            </TextBlock>
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="sectionLabel" Text="HELPER CPU RIGHT NOW"/>
+                                <TextBlock x:Name="LiveCpuText2" FontSize="19" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock x:Name="LiveCpuNote2" Classes="labMuted"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,2,0,0">
+                                <Button Classes="ghost" Content="Stop early" Click="OnStop2"/>
+                                <Button Classes="ghost" Content="Watch in Action Flow ›" Click="OnOpenFlow"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- ===== Done: what happened + what to have noticed ===== -->
+                        <StackPanel x:Name="DoneView2" Spacing="12" IsVisible="False">
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="DoneLabel2" Classes="sectionLabel" Text="WHAT HAPPENED"/>
+                                <StackPanel x:Name="SummaryList2" Spacing="5"/>
+                            </StackPanel>
+                            <StackPanel x:Name="NoticedBlock2" Spacing="6">
+                                <TextBlock Classes="sectionLabel" Text="WHAT YOU SHOULD HAVE NOTICED"/>
+                                <StackPanel x:Name="NoticedList2" Spacing="5"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button Classes="ghost" Content="Run Again" Click="OnStart2"/>
+                                <TextBlock Text="You can run this as many times as you like."
+                                           Classes="labMuted" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <TextBlock Classes="labMuted" Margin="2,2,0,0"
-                           Text="More experiments — memory, disk, network, process lifecycle — will arrive here in future updates, built on this same foundation."/>
+                           Text="More experiments — memory, disk, network — will arrive here in future updates, built on this same foundation."/>
             </StackPanel>
         </ScrollViewer>
     </Grid>

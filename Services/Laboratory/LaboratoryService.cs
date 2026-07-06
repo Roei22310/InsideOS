@@ -82,54 +82,120 @@ public sealed class LaboratoryService : IDisposable
         _selection = selection;
         _metrics = metrics;
         _story = story;
-        Experiments = new[] { BuildCpuExperiment() };
+        Experiments = new[] { BuildCpuExperiment(), BuildLifecycleExperiment() };
     }
 
     // ---- catalog ----
 
-    private static ExperimentDefinition BuildCpuExperiment()
-    {
-        var quiet = TimeSpan.FromSeconds(8);
-        var work = TimeSpan.FromSeconds(20);
-        return new ExperimentDefinition(
-            Id: "cpu-activity",
-            Category: "CPU",
-            Title: "What happens when a program suddenly needs the processor?",
-            AboutToObserve:
-                "InsideOS will launch a small helper process that it fully owns. For the first few "
-                + "seconds the helper does nothing at all — then it starts doing real arithmetic in a "
-                + "controlled rhythm, using part of one CPU core, and after about half a minute it "
-                + "exits on its own.",
-            WhyInteresting:
-                "You will watch a process's whole life: it appears, waits, works, and disappears — and "
-                + "the operating system responds at every step. Because InsideOS owns the helper, macOS "
-                + "reveals its exact numbers, so everything you see is measured, not estimated.",
-            WhatToWatch: new[]
-            {
-                "Processes — a second process named “InsideOS” appears. The operating system tracks processes by ID, not by name.",
-                "Its status — “Sleeping” while it waits, flipping to “Running” the moment real work begins.",
-                "Action Flow — InsideOS follows the helper automatically; watch the CPU particles speed up.",
-                "Timeline — the CPU rise should appear as a story within a few seconds of the work starting.",
-            },
-            DurationText: "About 30 seconds",
-            IntensityText: "Uses part of one CPU core",
-            WorkloadKind: "cpu",
-            WorkloadArgs: new[] { "8", "20", "60" }, // quiet s, work s, duty % — clamped again inside the worker
-            QuietPhase: quiet,
-            ExpectedDuration: quiet + work,
-            PhaseCaptions: new[]
-            {
-                new ExperimentPhaseCaption(TimeSpan.Zero,
-                    "The helper process has been created — and it is doing nothing yet. Notice it reads "
-                    + "“Sleeping”: alive, loaded, waiting."),
-                new ExperimentPhaseCaption(quiet,
-                    "Now the helper is doing real arithmetic. The scheduler is granting it processor "
-                    + "time — watch its CPU share and its status."),
-                new ExperimentPhaseCaption(quiet + TimeSpan.FromSeconds(16),
-                    "Almost done — the helper will exit on its own, and the operating system will "
-                    + "reclaim everything it used."),
-            });
-    }
+    private static ExperimentDefinition BuildCpuExperiment() => new(
+        Id: "cpu-activity",
+        Category: "CPU",
+        Title: "What happens when a program suddenly needs the processor?",
+        AboutToObserve:
+            "InsideOS will launch a small helper process that it fully owns. For the first few "
+            + "seconds the helper does nothing at all — then it starts doing real arithmetic in a "
+            + "controlled rhythm, using part of one CPU core, and after about half a minute it "
+            + "exits on its own.",
+        WhyInteresting:
+            "You will watch a process's whole life: it appears, waits, works, and disappears — and "
+            + "the operating system responds at every step. Because InsideOS owns the helper, macOS "
+            + "reveals its exact numbers, so everything you see is measured, not estimated.",
+        WhatToWatch: new[]
+        {
+            "Processes — a second process named “InsideOS” appears. The operating system tracks processes by ID, not by name.",
+            "Its status — “Sleeping” while it waits, flipping to “Running” the moment real work begins.",
+            "Action Flow — InsideOS follows the helper automatically; watch the CPU particles speed up.",
+            "Timeline — the CPU rise should appear as a story within a few seconds of the work starting.",
+        },
+        WhatYouLearned: new[]
+        {
+            "It appeared in Processes as a second “InsideOS” — the operating system identifies "
+            + "processes by ID, not by name.",
+            "Its status read “Sleeping” while it waited, then “Running” once real work began — "
+            + "that word describes the last second of behavior, not the process's purpose.",
+            "The Timeline likely recorded its CPU rise as a story, and Action Flow's particles "
+            + "sped up while it worked.",
+            "When it exited, it vanished from the process list — the operating system reclaimed "
+            + "its memory and CPU time immediately.",
+        },
+        DurationText: "About 30 seconds",
+        IntensityText: "Uses part of one CPU core",
+        WorkloadKind: "cpu",
+        Phases: new[]
+        {
+            new ExperimentPhase("Waiting", TimeSpan.FromSeconds(8), 0),
+            new ExperimentPhase("Working", TimeSpan.FromSeconds(20), 60),
+        },
+        PhaseCaptions: new[]
+        {
+            new ExperimentPhaseCaption(TimeSpan.Zero,
+                "The helper process has been created — and it is doing nothing yet. Notice it reads "
+                + "“Sleeping”: alive, loaded, waiting."),
+            new ExperimentPhaseCaption(TimeSpan.FromSeconds(8),
+                "Now the helper is doing real arithmetic. The scheduler is granting it processor "
+                + "time — watch its CPU share and its status."),
+            new ExperimentPhaseCaption(TimeSpan.FromSeconds(24),
+                "Almost done — the helper will exit on its own, and the operating system will "
+                + "reclaim everything it used."),
+        });
+
+    private static ExperimentDefinition BuildLifecycleExperiment() => new(
+        Id: "process-lifecycle",
+        Category: "PROCESS",
+        Title: "What happens when an application starts, works, waits, and exits?",
+        AboutToObserve:
+            "InsideOS will launch a helper process that lives a complete, deliberately visible "
+            + "life: it starts, initializes with light activity, works hard for a while, then goes "
+            + "idle — still alive, just waiting — and finally exits on its own. One whole process "
+            + "lifecycle in about half a minute.",
+        WhyInteresting:
+            "Every application on your Mac lives this same story — creation, initialization, work, "
+            + "waiting, exit. Watching one complete lifecycle end-to-end shows what the words in "
+            + "the process list actually mean: “Running” describes the last second, “Sleeping” "
+            + "means ready-and-waiting, and exiting hands everything back to the operating system.",
+        WhatToWatch: new[]
+        {
+            "Processes — watch the helper appear, and later vanish, from the list.",
+            "Its status — light activity while initializing, “Running” during real work, then back "
+            + "to “Sleeping” while it waits, still alive.",
+            "Action Flow — InsideOS follows the helper automatically through every phase.",
+            "Timeline — expect a story: process started, CPU rose, and finally the process ended.",
+        },
+        WhatYouLearned: new[]
+        {
+            "A process's life has distinct phases — created, initializing, working, waiting, "
+            + "exited — and you watched the operating system track every one of them.",
+            "Idle is not gone: during the waiting phase the helper used no measurable CPU, yet it "
+            + "stayed fully alive in the process list, ready to resume instantly.",
+            "“Running” and “Sleeping” describe the last second of behavior — the same process "
+            + "showed both, without ever changing what it was.",
+            "A graceful exit needs no cleanup from you: the moment the helper finished, the "
+            + "operating system reclaimed its memory and CPU time and removed it from the list.",
+        },
+        DurationText: "About 30 seconds",
+        IntensityText: "Uses part of one CPU core briefly",
+        WorkloadKind: "lifecycle",
+        Phases: new[]
+        {
+            new ExperimentPhase("Initializing", TimeSpan.FromSeconds(5), 12),
+            new ExperimentPhase("Working", TimeSpan.FromSeconds(12), 55),
+            new ExperimentPhase("Waiting", TimeSpan.FromSeconds(12), 0),
+        },
+        PhaseCaptions: new[]
+        {
+            new ExperimentPhaseCaption(TimeSpan.Zero,
+                "Phase 1 — Initializing: the process was just created and is setting itself up "
+                + "with light activity, like an app loading its pieces."),
+            new ExperimentPhaseCaption(TimeSpan.FromSeconds(5),
+                "Phase 2 — Working: now it is doing its real work. The scheduler grants it "
+                + "processor time and its status reads “Running”."),
+            new ExperimentPhaseCaption(TimeSpan.FromSeconds(17),
+                "Phase 3 — Waiting: work finished, but the process is still alive. Its CPU falls "
+                + "to zero and its status returns to “Sleeping” — idle is not the same as gone."),
+            new ExperimentPhaseCaption(TimeSpan.FromSeconds(26),
+                "Any moment now it will exit gracefully — watch it disappear from the process "
+                + "list as the operating system reclaims everything."),
+        });
 
     // ---- run control ----
 
@@ -257,7 +323,9 @@ public sealed class LaboratoryService : IDisposable
                     LiveWorkerCpu = cpu;
                     if (cpu > _peakCpu)
                         _peakCpu = cpu;
-                    if (elapsed >= def.QuietPhase)
+                    // "While working" = phases scheduled at real duty; light
+                    // initialization and idle waiting are excluded.
+                    if (def.DutyAt(elapsed) >= ExperimentDefinition.ActiveDutyFloor)
                     {
                         _workCpuSum += cpu;
                         _workCpuCount++;

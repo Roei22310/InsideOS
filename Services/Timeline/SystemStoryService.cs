@@ -303,7 +303,18 @@ public sealed class SystemStoryService : IDisposable
             if (st.TicksMissing < 2)
                 continue;
             (gone ??= new List<int>()).Add(pid);
-            if (st.TicksSeen >= 3 && budget > 0 && AllowNameEvent(st.Name, now))
+            // An exit that completes a story we already began telling is never
+            // spam — a lifecycle deserves its ending. The per-name cooldown
+            // only guards against start/exit churn across *different* pids
+            // (respawning helper daemons). Without this, any process living
+            // less than the cooldown lost its exit event to its own start.
+            bool completesStory;
+            lock (_lock)
+            {
+                completesStory = _openStoryByPid.TryGetValue(pid, out var open)
+                    && (now - open.LastTime).TotalSeconds <= GroupWindowSeconds;
+            }
+            if (st.TicksSeen >= 3 && budget > 0 && (completesStory || AllowNameEvent(st.Name, now)))
             {
                 budget--;
                 detected.Add((pid, st.Name, st.LastSample, new TimelineEvent(now,

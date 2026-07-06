@@ -9,6 +9,7 @@ using InsideOS.Services.ActionFlow;
 using InsideOS.Services.Explanations;
 using InsideOS.Services.History;
 using InsideOS.Services.Insights;
+using InsideOS.Services.Laboratory;
 using InsideOS.Services.Learning;
 using InsideOS.Services.Processes;
 using InsideOS.Services.Settings;
@@ -31,6 +32,7 @@ public partial class MainWindow : Window
     private readonly SystemStoryService _story;
     private readonly InsightService _insights;
     private readonly MetricHistoryService _history;
+    private readonly LaboratoryService _lab;
     private readonly ILearnContentService _learnContent;
     private bool _syncingNav;
     private bool _onboardingSelectionPending;
@@ -51,6 +53,7 @@ public partial class MainWindow : Window
         _insights.EnsureStarted(); // pure subscription on top of already-running services
         _history = new MetricHistoryService(_metrics, _processes);
         _history.EnsureStarted(); // rolling in-memory history from launch, same sources
+        _lab = new LaboratoryService(_processes, _processSelection, _metrics, _story); // observes via existing pipelines only
         _learnContent = new LearnContentService(_metrics.StaticInfo.TotalMemoryBytes); // shared by Action Flow + Processes
         SelectNav("live"); // Learning sits above Live View, but the dashboard stays the start page
 
@@ -280,6 +283,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _lab.Dispose(); // kills any running experiment child first
         _history.Dispose();
         _insights.Dispose();
         _story.Dispose();
@@ -323,6 +327,9 @@ public partial class MainWindow : Window
         {
             case "learning":
                 return new LearningPage(_lessons, StartLesson);
+            case "laboratory":
+                _processes.EnsureStarted(); // experiments are observed through the normal pipeline
+                return new LaboratoryPage(_lab, SelectNav);
             case "processes":
                 _processes.EnsureStarted();
                 return new ProcessExplorerPage(_processes, _processSelection, _learnContent,
@@ -349,6 +356,7 @@ public partial class MainWindow : Window
     private static string TitleFor(string key) => key switch
     {
         "learning" => "Learning",
+        "laboratory" => "Laboratory",
         "processes" => "Processes",
         "timeline" => "Timeline",
         "flow" => "Action Flow",

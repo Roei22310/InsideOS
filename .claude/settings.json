@@ -67,7 +67,18 @@
       "Bash(kill 83675)",
       "Bash(kill 83589)",
       "Bash(pkill -P 83589)",
-      "Bash(top -l 4 -s 1 -pid 80083 -stats pid,cpu,mem)"
+      "Bash(top -l 4 -s 1 -pid 80083 -stats pid,cpu,mem)",
+      "Bash(rsync -a --exclude bin --exclude obj /Users/roei/Desktop/InsideOS/ /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest15/)",
+      "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest15)",
+      "Bash(mkdir -p ~/.config/InsideOS-DriverTest15)",
+      "Bash(echo '{\"OnboardingCompleted\":true,\"CompletedLessons\":[]}')",
+      "Bash(nohup dotnet run -c Debug --no-build)",
+      "Bash(echo \"driver wrapper pid=$!\")",
+      "Bash(break)",
+      "Bash(grep DRIVER: __TRACKED_VAR__/lab_driver.log)",
+      "Read(//Users/roei/.config/**)",
+      "Read(//Users/roei/Library/Application Support/**)",
+      "Bash(ls \"$HOME/Library/Application Support/\" | grep -i drivertest && rm -rf \"$HOME/Library/Application Support/InsideOS-DriverTest15\" && echo \"removed driver settings dir\" || echo \"nothing to clean\")"
     ],
     "additionalDirectories": [
       "/Users/roei/Library/Application Support"

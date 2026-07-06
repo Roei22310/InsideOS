@@ -1,0 +1,155 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="InsideOS.Pages.LaboratoryPage">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.labBody">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="18"/>
+        </Style>
+        <Style Selector="TextBlock.labMuted">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="16"/>
+        </Style>
+        <Style Selector="Border.metaChip">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.metaChip TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*" Margin="32,28,32,28">
+        <StackPanel Spacing="6">
+            <TextBlock Classes="pageTitle" Text="Laboratory"/>
+            <TextBlock Classes="pageSubtitle"
+                       Text="Run safe, real experiments and watch your operating system respond."/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12" MaxWidth="720" HorizontalAlignment="Left" Margin="0,0,0,24">
+
+                <!-- What the Laboratory is -->
+                <Border Classes="metricCard" Padding="18">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="sectionLabel" Text="WHAT IS THE LABORATORY"/>
+                        <TextBlock Classes="labBody"
+                                   Text="Most of InsideOS watches whatever your computer happens to be doing. The Laboratory turns that around: it lets you make something happen on purpose — a small, real workload — so you can watch how the operating system responds, live, in every other page of this app."/>
+                        <TextBlock Classes="labMuted"
+                                   Text="Every experiment is a real child process owned by InsideOS: strictly limited, time-boxed, cancellable, and cleaned up automatically. It never touches your files, never changes any settings, and needs no special permissions."/>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Classes="sectionLabel" Text="EXPERIMENTS" Margin="0,10,0,0"/>
+
+                <!-- The CPU experiment card (three states swapped in code) -->
+                <Border Classes="metricCard" Padding="20">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock x:Name="CardKicker"
+                                       FontSize="10.5" FontWeight="SemiBold" LetterSpacing="1.2"
+                                       Foreground="{StaticResource BrushTextMuted}"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock x:Name="StateChip" Grid.Column="1"
+                                       FontSize="10.5" FontWeight="SemiBold" LetterSpacing="1"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock x:Name="CardTitle"
+                                   FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextPrimary}"/>
+
+                        <!-- ===== Idle: explain before running ===== -->
+                        <StackPanel x:Name="IdleView" Spacing="12">
+                            <TextBlock x:Name="AboutText" Classes="labBody"/>
+                            <StackPanel Spacing="6">
+                                <TextBlock Classes="sectionLabel" Text="WHY THIS IS INTERESTING"/>
+                                <TextBlock x:Name="WhyText" Classes="labBody"/>
+                            </StackPanel>
+                            <StackPanel Spacing="6">
+                                <TextBlock Classes="sectionLabel" Text="WHAT TO WATCH"/>
+                                <StackPanel x:Name="WatchList" Spacing="5"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Border Classes="metaChip">
+                                    <TextBlock x:Name="DurationChip"/>
+                                </Border>
+                                <Border Classes="metaChip">
+                                    <TextBlock x:Name="IntensityChip"/>
+                                </Border>
+                                <Border Classes="metaChip">
+                                    <TextBlock Text="Cleans up automatically"/>
+                                </Border>
+                            </StackPanel>
+                            <Button x:Name="StartButton" Classes="primary" Content="Start Experiment"
+                                    HorizontalAlignment="Left" Margin="0,2,0,0"
+                                    Click="OnStart"/>
+                        </StackPanel>
+
+                        <!-- ===== Running: elapsed + phase + live measurement ===== -->
+                        <StackPanel x:Name="RunningView" Spacing="12" IsVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock x:Name="ElapsedText"
+                                           FontSize="26" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock x:Name="ElapsedOfText" FontSize="12.5"
+                                           Foreground="{StaticResource BrushTextMuted}"
+                                           VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                            </StackPanel>
+                            <TextBlock x:Name="PhaseText" Classes="labBody">
+                                <TextBlock.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Opacity" Duration="0:0:0.2"/>
+                                    </Transitions>
+                                </TextBlock.Transitions>
+                            </TextBlock>
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="sectionLabel" Text="HELPER CPU RIGHT NOW"/>
+                                <TextBlock x:Name="LiveCpuText" FontSize="19" FontWeight="SemiBold"
+                                           Foreground="{StaticResource BrushTextPrimary}"/>
+                                <TextBlock x:Name="LiveCpuNote" Classes="labMuted"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,2,0,0">
+                                <Button Classes="ghost" Content="Stop early" Click="OnStop"/>
+                                <Button Classes="ghost" Content="Watch in Action Flow ›" Click="OnOpenFlow"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- ===== Done: what happened + what to have noticed ===== -->
+                        <StackPanel x:Name="DoneView" Spacing="12" IsVisible="False">
+                            <StackPanel Spacing="6">
+                                <TextBlock x:Name="DoneLabel" Classes="sectionLabel" Text="WHAT HAPPENED"/>
+                                <StackPanel x:Name="SummaryList" Spacing="5"/>
+                            </StackPanel>
+                            <StackPanel x:Name="NoticedBlock" Spacing="6">
+                                <TextBlock Classes="sectionLabel" Text="WHAT YOU SHOULD HAVE NOTICED"/>
+                                <StackPanel x:Name="NoticedList" Spacing="5"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button Classes="ghost" Content="Run Again" Click="OnStart"/>
+                                <TextBlock Text="You can run this as many times as you like."
+                                           Classes="labMuted" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Classes="labMuted" Margin="2,2,0,0"
+                           Text="More experiments — memory, disk, network, process lifecycle — will arrive here in future updates, built on this same foundation."/>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

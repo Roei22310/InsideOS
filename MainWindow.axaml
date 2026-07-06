@@ -151,6 +151,14 @@
                             <TextBlock Text="Learning" VerticalAlignment="Center"/>
                         </StackPanel>
                     </ListBoxItem>
+                    <ListBoxItem Tag="laboratory">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconFlask}"/>
+                            </Viewbox>
+                            <TextBlock Text="Laboratory" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
                     <ListBoxItem Tag="timeline">
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <Viewbox Width="17" Height="17" VerticalAlignment="Center">

@@ -10,6 +10,7 @@ using Avalonia.Media;
 using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using InsideOS.Services.Insights;
+using InsideOS.Services.Narration;
 using InsideOS.Services.Timeline;
 
 namespace InsideOS.Pages;
@@ -52,7 +53,7 @@ public partial class TimelinePage : UserControl
     private readonly Action<TimelineStorySnapshot> _openStory;
     private readonly Dictionary<int, Grid> _rows = new();
     private readonly Dictionary<int, TimelineStorySnapshot> _snapshots = new();
-    private readonly Dictionary<string, (Border Card, Insight Shown)> _insightCards = new();
+    private readonly Dictionary<string, (Border Card, NarratedActivity Shown)> _insightCards = new();
     private string _filter = "all";
     private string _search = "";
     private string _summaryKey = "";
@@ -533,7 +534,7 @@ public partial class TimelinePage : UserControl
         }
     }
 
-    private void ApplyInsights(IReadOnlyList<Insight> insights)
+    private void ApplyInsights(IReadOnlyList<NarratedActivity> insights)
     {
         if (!_attached)
             return;
@@ -584,7 +585,7 @@ public partial class TimelinePage : UserControl
         InsightList.Children.Insert(Math.Min(index, InsightList.Children.Count), card);
     }
 
-    private static Control BuildInsightContent(Insight insight)
+    private static Control BuildInsightContent(NarratedActivity insight)
     {
         var tint = InsightTint(insight.Category);
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
@@ -644,7 +645,7 @@ public partial class TimelinePage : UserControl
 
         body.Children.Add(new TextBlock
         {
-            Text = insight.Explanation,
+            Text = insight.Detail,
             FontSize = 11,
             LineHeight = 15,
             TextWrapping = TextWrapping.Wrap,
@@ -676,21 +677,21 @@ public partial class TimelinePage : UserControl
         return grid;
     }
 
-    private static (string Label, Color Color) ConfidenceVisual(InsightConfidence confidence) => confidence switch
+    private static (string Label, Color Color) ConfidenceVisual(NarrationConfidence confidence) => confidence switch
     {
-        InsightConfidence.High => ("HIGH CONFIDENCE", Color.Parse("#3FBF7F")),
-        InsightConfidence.Medium => ("MEDIUM CONFIDENCE", Color.Parse("#4D9FFF")),
+        NarrationConfidence.High => ("HIGH CONFIDENCE", Color.Parse("#3FBF7F")),
+        NarrationConfidence.Medium => ("MEDIUM CONFIDENCE", Color.Parse("#4D9FFF")),
         _ => ("LOW CONFIDENCE", Color.Parse("#9AA3B4")),
     };
 
-    private static Color InsightTint(InsightCategory category) => category switch
+    private static Color InsightTint(ActivityCategory category) => category switch
     {
-        InsightCategory.Cpu => CpuColor,
-        InsightCategory.Memory => MemoryColor,
-        InsightCategory.Disk => DiskColor,
-        InsightCategory.Network => NetworkColor,
-        InsightCategory.Application => ProcessColor,
-        InsightCategory.Battery => DiskColor,
+        ActivityCategory.Cpu => CpuColor,
+        ActivityCategory.Memory => MemoryColor,
+        ActivityCategory.Disk => DiskColor,
+        ActivityCategory.Network => NetworkColor,
+        ActivityCategory.Application => ProcessColor,
+        ActivityCategory.Battery => DiskColor,
         _ => Color.Parse("#45C4D6"),
     };
 

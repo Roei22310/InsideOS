@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using InsideOS.Controls;
 using InsideOS.Services.ActionFlow;
 using InsideOS.Services.Explanations;
+using InsideOS.Services.Narration;
 using InsideOS.Services.Learning;
 using InsideOS.Services.Processes;
 using InsideOS.Services.SystemMetrics;
@@ -256,13 +257,13 @@ public partial class ActionFlowPage : UserControl
     /// <summary>Fades the explanation text out, swaps it, and fades back in.</summary>
     private void ApplyExplanation(Explanation explanation)
     {
-        if (explanation.Kind == ExplanationKind.Terminated)
+        if (explanation.Kind == ActivityTone.Terminated)
             return; // the exited empty-state already tells this story
 
         ExplanationIcon.Stroke = explanation.Kind switch
         {
-            ExplanationKind.Idle => ExplanationMuted,
-            ExplanationKind.Terminated => ExplanationAlert,
+            ActivityTone.Idle => ExplanationMuted,
+            ActivityTone.Terminated => ExplanationAlert,
             _ => ExplanationAccent,
         };
 

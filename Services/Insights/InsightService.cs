@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using InsideOS.Services.Narration;
 using InsideOS.Services.Processes;
 using InsideOS.Services.SystemMetrics;
 using InsideOS.Services.Timeline;
@@ -11,8 +12,9 @@ namespace InsideOS.Services.Insights;
 /// <summary>
 /// Evidence collector and feed for System Intelligence. Subscribes to the
 /// services that already exist (live metrics, process monitor, timeline
-/// stories) — no new monitoring — keeps small rolling windows, and runs the
-/// deterministic <see cref="IInsightEngine"/> every few seconds. Also
+/// stories) — no new monitoring — keeps small rolling windows, and asks the
+/// shared <see cref="NarrationEngine"/> for the system-level interpretation
+/// every few seconds. This class collects and feeds; it never reasons. Also
 /// maintains the "Today's Story" summary for the observation window.
 /// </summary>
 public sealed class InsightService : IDisposable
@@ -36,7 +38,6 @@ public sealed class InsightService : IDisposable
     private readonly LiveMetricsService _metrics;
     private readonly ProcessMonitorService _processes;
     private readonly SystemStoryService _story;
-    private readonly IInsightEngine _engine;
     private readonly object _state = new();
 
     private readonly List<double> _systemCpu = new();
@@ -58,27 +59,25 @@ public sealed class InsightService : IDisposable
     private int _started;
     private volatile bool _disposed;
 
-    private IReadOnlyList<Insight> _current = Array.Empty<Insight>();
+    private IReadOnlyList<NarratedActivity> _current = Array.Empty<NarratedActivity>();
     private DailySummary? _summary;
 
     /// <summary>Raised on a background thread whenever the live set actually changes.</summary>
-    public event Action<IReadOnlyList<Insight>>? InsightsUpdated;
+    public event Action<IReadOnlyList<NarratedActivity>>? InsightsUpdated;
 
     public event Action<DailySummary>? SummaryUpdated;
 
     public InsightService(
         LiveMetricsService metrics,
         ProcessMonitorService processes,
-        SystemStoryService story,
-        IInsightEngine engine)
+        SystemStoryService story)
     {
         _metrics = metrics;
         _processes = processes;
         _story = story;
-        _engine = engine;
     }
 
-    public IReadOnlyList<Insight> CurrentInsights
+    public IReadOnlyList<NarratedActivity> CurrentInsights
     {
         get { lock (_state) return _current; }
     }
@@ -111,7 +110,7 @@ public sealed class InsightService : IDisposable
     {
         if (_disposed)
             return;
-        IReadOnlyList<Insight>? changed = null;
+        IReadOnlyList<NarratedActivity>? changed = null;
         DailySummary? summary = null;
         lock (_state)
         {
@@ -202,9 +201,9 @@ public sealed class InsightService : IDisposable
 
     // ---- analysis ----
 
-    private IReadOnlyList<Insight>? AnalyzeLocked()
+    private IReadOnlyList<NarratedActivity>? AnalyzeLocked()
     {
-        var evidence = new InsightEvidence(
+        var context = new NarrationContext(
             DateTime.Now,
             Average(_systemCpu, 30),
             Average(_systemCpu, SystemCpuWindow),
@@ -214,7 +213,7 @@ public sealed class InsightService : IDisposable
             _events.ToArray(),
             BuildProcessEvidenceLocked());
 
-        var candidates = _engine.Analyze(evidence).Take(MaxLiveInsights).ToList();
+        var candidates = NarrationEngine.NarrateSystem(context).Take(MaxLiveInsights).ToList();
 
         // Keep the original card (and its timestamp) when nothing about it
         // changed — the UI then leaves that card untouched: no flicker.
@@ -224,7 +223,7 @@ public sealed class InsightService : IDisposable
             if (previous.TryGetValue(candidates[i].Id, out var old))
             {
                 candidates[i] = old.Title == candidates[i].Title
-                                && old.Explanation == candidates[i].Explanation
+                                && old.Detail == candidates[i].Detail
                                 && old.Confidence == candidates[i].Confidence
                     ? old
                     : candidates[i] with { Timestamp = old.Timestamp };

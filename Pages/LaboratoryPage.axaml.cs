@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using InsideOS.Services.Laboratory;
+using InsideOS.Services.Narration;
 
 namespace InsideOS.Pages;
 
@@ -134,6 +135,11 @@ public partial class LaboratoryPage : UserControl
         SummaryList.Children.Clear();
         NoticedList.Children.Clear();
 
+        // The shared Narration Engine interprets the run — the same layer
+        // that narrates Timeline stories, Insights and Action Flow. This page
+        // only renders its evidence (measured facts) and summary.
+        var narration = NarrationEngine.NarrateExperiment(result);
+
         switch (result.Outcome)
         {
             case ExperimentOutcome.Completed:
@@ -141,26 +147,8 @@ public partial class LaboratoryPage : UserControl
                 DoneLabel.Text = "WHAT HAPPENED";
                 NoticedBlock.IsVisible = true;
 
-                if (result.WorkerPid is { } pid)
-                    SummaryList.Children.Add(Bullet(
-                        $"The helper process (PID {pid}) lived for about {result.Elapsed.TotalSeconds:0} seconds, "
-                        + "then exited on its own — no cleanup was needed from you.", BodyText));
-                if (result.WorkerAvgCpuWhileWorking is { } avg && result.WorkerPeakCpu is { } peak)
-                    SummaryList.Children.Add(Bullet(
-                        $"While working it averaged {avg:0}% of one CPU core and peaked at {peak:0}%"
-                        + (result.CpuWasPrecise ? " — measured exactly, because InsideOS owns the process." : "."),
-                        BodyText));
-                if (result.WorkerThreads is { } threads)
-                    SummaryList.Children.Add(Bullet(
-                        $"It reported {threads} thread{(threads == 1 ? "" : "s")} — the arithmetic itself "
-                        + "ran on just one; the rest belong to the runtime that hosts the program "
-                        + "(housekeeping like the garbage collector). Even a simple program is a small team.",
-                        BodyText));
-                if (result.SystemCpuBefore is { } before && result.SystemCpuPeak is { } sysPeak
-                    && sysPeak > before)
-                    SummaryList.Children.Add(Bullet(
-                        $"Whole-system CPU rose from about {before:0}% to a peak of {sysPeak:0}% during the "
-                        + "run — likely mostly the helper's doing, though other apps kept working too.", BodyText));
+                foreach (var evidence in narration.Evidence)
+                    SummaryList.Children.Add(Bullet(evidence.Fact, BodyText));
 
                 NoticedList.Children.Add(Bullet(
                     "It appeared in Processes as a second “InsideOS” — the operating system identifies "
@@ -180,21 +168,14 @@ public partial class LaboratoryPage : UserControl
                 ShowView(DoneView, "STOPPED", ChipStopped);
                 DoneLabel.Text = "WHAT HAPPENED";
                 NoticedBlock.IsVisible = false;
-                SummaryList.Children.Add(Bullet(
-                    "You stopped the experiment early, so InsideOS terminated the helper immediately — "
-                    + "notice how quickly it disappeared from the process list. Ending a process is "
-                    + "itself an operating-system action worth watching: one request, and the process "
-                    + "and all its resources were gone.", BodyText));
+                SummaryList.Children.Add(Bullet(narration.Summary, BodyText));
                 break;
 
             default:
                 ShowView(DoneView, "COULD NOT RUN", ChipFailed);
                 DoneLabel.Text = "WHAT WENT WRONG";
                 NoticedBlock.IsVisible = false;
-                SummaryList.Children.Add(Bullet(
-                    result.FailureReason
-                    ?? "The experiment could not run. Nothing was started, so nothing is left behind.",
-                    BodyText));
+                SummaryList.Children.Add(Bullet(narration.Summary, BodyText));
                 break;
         }
     }

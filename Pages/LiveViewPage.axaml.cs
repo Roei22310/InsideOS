@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using InsideOS.Services.ActionFlow;
 using InsideOS.Services.Explanations;
 using InsideOS.Services.Insights;
+using InsideOS.Services.Narration;
 using InsideOS.Services.Learning;
 using InsideOS.Services.Processes;
 using InsideOS.Services.SystemMetrics;
@@ -319,7 +320,7 @@ public partial class LiveViewPage : UserControl
 
     // ---- live insights (top 3) ----
 
-    private void ApplyInsights(IReadOnlyList<Insight> insights)
+    private void ApplyInsights(IReadOnlyList<NarratedActivity> insights)
     {
         if (!_attached)
             return;
@@ -330,16 +331,16 @@ public partial class LiveViewPage : UserControl
         InsightsEmptyDash.IsVisible = top.Count == 0;
     }
 
-    private static Control BuildInsightRow(Insight insight)
+    private static Control BuildInsightRow(NarratedActivity insight)
     {
         var tint = insight.Category switch
         {
-            InsightCategory.Cpu => Color.Parse("#4D9FFF"),
-            InsightCategory.Memory => Color.Parse("#7A5CFF"),
-            InsightCategory.Disk => Color.Parse("#E5A455"),
-            InsightCategory.Network => Color.Parse("#3FBF7F"),
-            InsightCategory.Battery => Color.Parse("#E5A455"),
-            InsightCategory.Application => Color.Parse("#9AA3B4"),
+            ActivityCategory.Cpu => Color.Parse("#4D9FFF"),
+            ActivityCategory.Memory => Color.Parse("#7A5CFF"),
+            ActivityCategory.Disk => Color.Parse("#E5A455"),
+            ActivityCategory.Network => Color.Parse("#3FBF7F"),
+            ActivityCategory.Battery => Color.Parse("#E5A455"),
+            ActivityCategory.Application => Color.Parse("#9AA3B4"),
             _ => Color.Parse("#45C4D6"),
         };
 
@@ -386,8 +387,8 @@ public partial class LiveViewPage : UserControl
         {
             Text = $"{insight.Confidence switch
             {
-                InsightConfidence.High => "High",
-                InsightConfidence.Medium => "Medium",
+                NarrationConfidence.High => "High",
+                NarrationConfidence.Medium => "Medium",
                 _ => "Low",
             }} confidence · {insight.Timestamp:HH:mm}",
             FontSize = 10,

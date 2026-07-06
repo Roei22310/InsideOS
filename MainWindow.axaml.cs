@@ -49,7 +49,7 @@ public partial class MainWindow : Window
         _lessons = new LessonManager(new BuiltInLessonProvider(), _settings);
         _story = new SystemStoryService(_processes, _processSelection, CreateProcessIoSource());
         _story.EnsureStarted(); // record the system's story from launch, not from first page visit
-        _insights = new InsightService(_metrics, _processes, _story, new InsightEngine());
+        _insights = new InsightService(_metrics, _processes, _story); // interpretation lives in NarrationEngine
         _insights.EnsureStarted(); // pure subscription on top of already-running services
         _history = new MetricHistoryService(_metrics, _processes);
         _history.EnsureStarted(); // rolling in-memory history from launch, same sources

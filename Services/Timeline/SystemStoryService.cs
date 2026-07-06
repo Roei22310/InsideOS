@@ -381,7 +381,11 @@ public sealed class SystemStoryService : IDisposable
         story.Events.Add(evt);
         story.LastTime = evt.Time;
         story.LastSample = sample ?? story.LastSample;
-        story.Explanation = StoryNarrator.Narrate(story.ProcessName, story.Events);
+        // The Narration Engine is the single interpreter for all activity —
+        // this story text is the same interpretation Insights and Action Flow
+        // derive from the same evidence.
+        story.Explanation = Narration.NarrationEngine
+            .NarrateStory(story.ProcessName, story.Events)?.Summary;
     }
 
     private static TimelineStorySnapshot Snapshot(Story story) => new(

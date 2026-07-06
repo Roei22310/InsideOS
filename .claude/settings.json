@@ -82,7 +82,14 @@
       "Bash(rm -rf /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest171)",
       "Bash(rsync -a --exclude bin --exclude obj /Users/roei/Desktop/InsideOS/ /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest171/)",
       "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest171)",
-      "Bash(mkdir -p '/Users/roei/Library/Application Support/InsideOS-DriverTest171')"
+      "Bash(mkdir -p '/Users/roei/Library/Application Support/InsideOS-DriverTest171')",
+      "Bash(rm -rf /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest18)",
+      "Bash(rsync -a --exclude bin --exclude obj /Users/roei/Desktop/InsideOS/ /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest18/)",
+      "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest18)",
+      "Bash(mkdir -p '/Users/roei/Library/Application Support/InsideOS-DriverTest18')",
+      "Bash(sed 's/^/driver build errors: /')",
+      "Bash(echo \"wrapper=$!\")",
+      "Bash(grep DRIVER: __TRACKED_VAR__/m18_driver.log)"
     ],
     "additionalDirectories": [
       "/Users/roei/Library/Application Support"

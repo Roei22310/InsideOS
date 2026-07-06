@@ -6,39 +6,6 @@
              x:Class="InsideOS.Pages.TimelinePage">
 
     <UserControl.Styles>
-        <!-- Filter pills -->
-        <Style Selector="Border.filterBar">
-            <Setter Property="Background" Value="#0DFFFFFF"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="99"/>
-            <Setter Property="Padding" Value="3"/>
-        </Style>
-        <Style Selector="Border.filterPill">
-            <Setter Property="Padding" Value="11,4"/>
-            <Setter Property="CornerRadius" Value="99"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Border.filterPill:pointerover">
-            <Setter Property="Background" Value="#0DFFFFFF"/>
-        </Style>
-        <Style Selector="Border.filterPill.selected">
-            <Setter Property="Background" Value="#2E4D9FFF"/>
-        </Style>
-        <Style Selector="Border.filterPill TextBlock">
-            <Setter Property="FontSize" Value="11.5"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
-        </Style>
-        <Style Selector="Border.filterPill.selected TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-        </Style>
 
         <!-- Story cards -->
         <Style Selector="Border.storyCard">
@@ -91,27 +58,27 @@
 
         <!-- Filters + search -->
         <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,18,0,0">
-            <Border Classes="filterBar" HorizontalAlignment="Left">
+            <Border Classes="pillBar" HorizontalAlignment="Left">
                 <StackPanel x:Name="FilterBar" Orientation="Horizontal">
-                    <Border Classes="filterPill selected" Tag="all" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill selected" Tag="all" PointerPressed="OnFilterPressed">
                         <TextBlock Text="All"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="cpu" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="cpu" PointerPressed="OnFilterPressed">
                         <TextBlock Text="CPU"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="memory" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="memory" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Memory"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="disk" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="disk" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Disk"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="network" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="network" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Network"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="processes" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="processes" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Processes"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="learning" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="learning" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Learning"/>
                     </Border>
                 </StackPanel>

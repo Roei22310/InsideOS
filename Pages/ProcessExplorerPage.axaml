@@ -62,40 +62,6 @@
             <Setter Property="CornerRadius" Value="8"/>
         </Style>
 
-        <!-- Filter pills (shared visual language with the Timeline filters) -->
-        <Style Selector="Border.filterBar">
-            <Setter Property="Background" Value="#0DFFFFFF"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="99"/>
-            <Setter Property="Padding" Value="3"/>
-        </Style>
-        <Style Selector="Border.filterPill">
-            <Setter Property="Padding" Value="12,4"/>
-            <Setter Property="CornerRadius" Value="99"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Border.filterPill:pointerover">
-            <Setter Property="Background" Value="#0DFFFFFF"/>
-        </Style>
-        <Style Selector="Border.filterPill.selected">
-            <Setter Property="Background" Value="#2E4D9FFF"/>
-        </Style>
-        <Style Selector="Border.filterPill TextBlock">
-            <Setter Property="FontSize" Value="11.5"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
-        </Style>
-        <Style Selector="Border.filterPill.selected TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
-        </Style>
-
         <Style Selector="Border.stateNote">
             <Setter Property="Background" Value="#0AFFFFFF"/>
             <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
@@ -115,18 +81,18 @@
             <TextBox x:Name="SearchBox" Classes="search"
                      PlaceholderText="Search processes…"
                      TextChanged="OnSearchChanged"/>
-            <Border Grid.Column="2" Classes="filterBar" VerticalAlignment="Center">
+            <Border Grid.Column="2" Classes="pillBar" VerticalAlignment="Center">
                 <StackPanel x:Name="FilterBar" Orientation="Horizontal">
-                    <Border Classes="filterPill selected" Tag="All" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill selected" Tag="All" PointerPressed="OnFilterPressed">
                         <TextBlock Text="All"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="Running" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="Running" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Running"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="RecentlyActive" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="RecentlyActive" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Recently Active"/>
                     </Border>
-                    <Border Classes="filterPill" Tag="Sleeping" PointerPressed="OnFilterPressed">
+                    <Border Classes="pill" Tag="Sleeping" PointerPressed="OnFilterPressed">
                         <TextBlock Text="Sleeping"/>
                     </Border>
                 </StackPanel>

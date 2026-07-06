@@ -280,11 +280,9 @@ public partial class MetricsPage : UserControl
                 ? "Network activity has been minimal."
                 : $"Network activity has been moderate — averaging {Format.Speed(down.Avg + up.Avg)}.");
 
-        double diskDelta = disk.Count >= 2 ? disk.Cur - disk.Min : 0;
         SetText(HealthLine4, Math.Abs(disk.Cur - disk.Avg) < 50 * 1024.0 * 1024 && disk.Max - disk.Min < 200 * 1024.0 * 1024
             ? "Disk usage has barely changed."
             : $"Disk usage moved by about {Format.Bytes(Math.Abs(disk.Max - disk.Min))} in this window.");
-        _ = diskDelta;
     }
 
     private void RefreshProcesses()

@@ -43,8 +43,6 @@
         <StreamGeometry x:Key="IconUpload">M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12</StreamGeometry>
         <StreamGeometry x:Key="IconBattery">M4 7h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM22 11v2M6 11v2M10 11v2</StreamGeometry>
         <StreamGeometry x:Key="IconTimer">M10 2h4M12 14l3-3M12 6a8 8 0 1 0 0 16a8 8 0 1 0 0-16</StreamGeometry>
-        <StreamGeometry x:Key="IconMonitor">M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8 21h8M12 17v4</StreamGeometry>
-        <StreamGeometry x:Key="IconCpuChip">M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3</StreamGeometry>
         <StreamGeometry x:Key="IconSettings">M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6</StreamGeometry>
     </Application.Resources>
 
@@ -61,15 +59,7 @@
             <Setter Property="FontSize" Value="13.5"/>
             <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         </Style>
-
-        <!-- Placeholder card -->
-        <Style Selector="Border.placeholderCard">
-            <Setter Property="Background" Value="{StaticResource BrushCard}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BrushCardBorder}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="12"/>
-        </Style>
-        <Style Selector="Border.placeholderIconBox">
+                <Style Selector="Border.placeholderIconBox">
             <Setter Property="Width" Value="48"/>
             <Setter Property="Height" Value="48"/>
             <Setter Property="CornerRadius" Value="13"/>
@@ -127,6 +117,54 @@
         <Style Selector="Button.ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#18FFFFFF"/>
             <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+
+        <!-- Segmented pill bars (filters, ranges) — one vocabulary app-wide -->
+        <Style Selector="Border.pillBar">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Padding" Value="3"/>
+        </Style>
+        <Style Selector="Border.pill">
+            <Setter Property="Padding" Value="11,4"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.pill:pointerover">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+        <Style Selector="Border.pill.selected">
+            <Setter Property="Background" Value="#2E4D9FFF"/>
+        </Style>
+        <Style Selector="Border.pill TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
+        </Style>
+        <Style Selector="Border.pill.selected TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}"/>
+        </Style>
+
+        <!-- Small meta chips (duration, difficulty, intensity…) -->
+        <Style Selector="Border.metaChip">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushHairline}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.metaChip TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}"/>
         </Style>
 
         <!-- Section labels -->

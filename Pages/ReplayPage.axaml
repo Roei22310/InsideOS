@@ -102,6 +102,9 @@
                         <StackPanel x:Name="EventsList" Spacing="7"/>
                         <TextBlock x:Name="EndMark" Text="■  End" FontSize="11.5"
                                    Foreground="{StaticResource BrushTextMuted}"/>
+                        <TextBlock x:Name="HiddenNote" IsVisible="False"
+                                   FontSize="10.5" LineHeight="14" TextWrapping="Wrap"
+                                   Foreground="{StaticResource BrushTextMuted}"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

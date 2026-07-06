@@ -294,6 +294,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _replay.Exit(); // stop the replay timer before its feeds are disposed (no-op when live)
         _lab.Dispose(); // kills any running experiment child first
         _history.Dispose();
         _insights.Dispose();
@@ -386,17 +387,28 @@ public partial class MainWindow : Window
             SelectNav("replay");
     }
 
+    private static readonly Avalonia.Media.IBrush PillLive =
+        new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#3FBF7F"));
+    private static readonly Avalonia.Media.IBrush PillReplay =
+        new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#E5A455"));
+
     private void UpdateReplayPill()
     {
         if (_replayState.IsReplaying)
         {
-            StatusText.Text = $"Replaying · {(int)_replay.Position.TotalMinutes:0}:{_replay.Position.Seconds:00}";
-            StatusDot.Fill = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#E5A455"));
+            string time = $"{(int)_replay.Position.TotalMinutes:0}:{_replay.Position.Seconds:00}";
+            StatusText.Text = _replay.Playback switch
+            {
+                Services.Replay.ReplayPlayback.Paused => $"Replay paused · {time}",
+                Services.Replay.ReplayPlayback.Ended => "Replay ended",
+                _ => $"Replaying · {time}",
+            };
+            StatusDot.Fill = PillReplay;
         }
         else
         {
             StatusText.Text = "Ready";
-            StatusDot.Fill = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#3FBF7F"));
+            StatusDot.Fill = PillLive;
         }
     }
 

@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using InsideOS.Services.Replay;
+using InsideOS.Services.Timeline;
 
 namespace InsideOS.Pages;
 
@@ -25,6 +26,10 @@ public partial class ReplayPage : UserControl
     private static readonly IBrush ChipPaused = new SolidColorBrush(Color.Parse("#E5A455"));
     private static readonly IBrush ChipEnded = new SolidColorBrush(Color.Parse("#4D9FFF"));
     private static readonly IBrush ChipReady = new SolidColorBrush(Color.Parse("#656F82"));
+
+    private static readonly IBrush MarkerInfo = new SolidColorBrush(Color.Parse("#656F82"));
+    private static readonly IBrush MarkerNotice = new SolidColorBrush(Color.Parse("#E5A455"));
+    private static readonly IBrush MarkerHigh = new SolidColorBrush(Color.Parse("#E56262"));
 
     private readonly ReplayService _replay;
     private readonly List<(TimeSpan Offset, TextBlock Time, TextBlock Title)> _eventRows = new();
@@ -141,11 +146,38 @@ public partial class ReplayPage : UserControl
         }
     }
 
+    /// <summary>
+    /// The tape records every event the system produced; the page curates.
+    /// Major = the experiment's own process, learning milestones, and anything
+    /// the timeline itself considered noteworthy. The rest still replays —
+    /// it just doesn't clutter the map.
+    /// </summary>
+    private static bool IsMajor(ReplaySession session, ReplayEvent evt) =>
+        evt.Pid == session.FocusPid
+        || evt.Pid < 0
+        || evt.Event.Severity >= TimelineSeverity.Notice;
+
+    private static IEnumerable<ReplayEvent> MajorEvents(ReplaySession session)
+    {
+        foreach (var evt in session.Events)
+            if (IsMajor(session, evt) && evt.Event.Time >= session.StartedAt)
+                yield return evt;
+    }
+
     private void BuildEventRows(ReplaySession session)
     {
         _eventRows.Clear();
         EventsList.Children.Clear();
+        int hidden = 0;
         foreach (var evt in session.Events)
+            if (!IsMajor(session, evt))
+                hidden++;
+        HiddenNote.IsVisible = hidden > 0;
+        HiddenNote.Text = hidden > 0
+            ? $"{hidden} quieter background event{(hidden == 1 ? "" : "s")} from other processes "
+              + "aren't listed — the replay still reproduces everything."
+            : "";
+        foreach (var evt in MajorEvents(session))
         {
             var offset = evt.Event.Time - session.StartedAt;
             if (offset < TimeSpan.Zero)
@@ -181,7 +213,7 @@ public partial class ReplayPage : UserControl
         double width = MarkerCanvas.Bounds.Width;
         if (session is null || width <= 0 || session.Duration.TotalSeconds <= 0)
             return;
-        foreach (var evt in session.Events)
+        foreach (var evt in MajorEvents(session))
         {
             var offset = evt.Event.Time - session.StartedAt;
             if (offset < TimeSpan.Zero)
@@ -191,7 +223,12 @@ public partial class ReplayPage : UserControl
             {
                 Width = 4,
                 Height = 4,
-                Fill = MutedText,
+                Fill = evt.Event.Severity switch
+                {
+                    TimelineSeverity.High => MarkerHigh,
+                    TimelineSeverity.Notice => MarkerNotice,
+                    _ => MarkerInfo,
+                },
                 Opacity = 0.9,
             };
             Canvas.SetLeft(dot, Math.Clamp(x - 2, 0, Math.Max(0, width - 4)));

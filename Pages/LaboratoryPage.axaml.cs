@@ -34,7 +34,7 @@ public partial class LaboratoryPage : UserControl
         public required StackPanel IdleView, RunningView, DoneView;
         public required StackPanel WatchList, SummaryList, NoticedList, NoticedBlock;
         public required TextBlock ElapsedText, ElapsedOfText, PhaseText, LiveCpuText, LiveCpuNote, DoneLabel;
-        public required Button StartButton;
+        public required Button StartButton, ReplayBtn;
         public string LastPhaseCaption = "";
     }
 
@@ -62,7 +62,7 @@ public partial class LaboratoryPage : UserControl
             NoticedList = NoticedList, NoticedBlock = NoticedBlock,
             ElapsedText = ElapsedText, ElapsedOfText = ElapsedOfText, PhaseText = PhaseText,
             LiveCpuText = LiveCpuText, LiveCpuNote = LiveCpuNote, DoneLabel = DoneLabel,
-            StartButton = StartButton,
+            StartButton = StartButton, ReplayBtn = ReplayButton,
         });
         _cards.Add(new Card
         {
@@ -73,7 +73,7 @@ public partial class LaboratoryPage : UserControl
             NoticedList = NoticedList2, NoticedBlock = NoticedBlock2,
             ElapsedText = ElapsedText2, ElapsedOfText = ElapsedOfText2, PhaseText = PhaseText2,
             LiveCpuText = LiveCpuText2, LiveCpuNote = LiveCpuNote2, DoneLabel = DoneLabel2,
-            StartButton = StartButton2,
+            StartButton = StartButton2, ReplayBtn = ReplayButton2,
         });
 
         // Static copy comes straight from the definitions.
@@ -198,6 +198,11 @@ public partial class LaboratoryPage : UserControl
         // that narrates Timeline stories, Insights and Action Flow. This page
         // only renders its evidence (measured facts) and summary.
         var narration = NarrationEngine.NarrateExperiment(result);
+
+        // A failed spawn recorded nothing — offering "Replay Session" there
+        // would replay some *other* session. Completed and stopped runs both
+        // have honest tapes.
+        card.ReplayBtn.IsVisible = result.Outcome != ExperimentOutcome.Failed;
 
         switch (result.Outcome)
         {

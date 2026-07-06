@@ -25,10 +25,23 @@ public sealed class LiveMetricsService : IDisposable
     private (long Rx, long Tx, long Timestamp)? _previousNet;
     private BatteryStatus? _battery;
     private int _ticksSinceBatteryPoll = BatteryPollIntervalTicks;
+    private volatile bool _replaying;
 
     public SystemStaticInfo StaticInfo { get; }
 
     public event Action<MetricsSnapshot>? SnapshotUpdated;
+
+    /// <summary>Replay seam — see ProcessMonitorService: live sampling keeps
+    /// running muted; recorded snapshots are injected through the same event.</summary>
+    public void EnterReplay() => _replaying = true;
+
+    public void ExitReplay() => _replaying = false;
+
+    public void InjectReplay(MetricsSnapshot snapshot)
+    {
+        if (_replaying)
+            SnapshotUpdated?.Invoke(snapshot);
+    }
 
     public LiveMetricsService(ISystemMetricsSource source)
     {
@@ -76,7 +89,8 @@ public sealed class LiveMetricsService : IDisposable
             cpu, memory, disk, download, upload, _battery,
             TimeSpan.FromMilliseconds(Environment.TickCount64));
 
-        SnapshotUpdated?.Invoke(snapshot);
+        if (!_replaying)
+            SnapshotUpdated?.Invoke(snapshot);
     }
 
     private double? SampleCpu()

@@ -159,6 +159,14 @@
                             <TextBlock Text="Laboratory" VerticalAlignment="Center"/>
                         </StackPanel>
                     </ListBoxItem>
+                    <ListBoxItem Tag="replay">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Viewbox Width="17" Height="17" VerticalAlignment="Center">
+                                <Path Width="24" Height="24" Data="{StaticResource IconReplay}"/>
+                            </Viewbox>
+                            <TextBlock Text="Replay" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ListBoxItem>
                     <ListBoxItem Tag="timeline">
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <Viewbox Width="17" Height="17" VerticalAlignment="Center">
@@ -262,9 +270,9 @@
                             BorderBrush="{StaticResource BrushHairline}" BorderThickness="1"
                             CornerRadius="99" Padding="10,4">
                         <StackPanel Orientation="Horizontal" Spacing="7">
-                            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                            <Ellipse x:Name="StatusDot" Width="6" Height="6" VerticalAlignment="Center"
                                      Fill="{StaticResource BrushSuccess}"/>
-                            <TextBlock Text="Ready" FontSize="11"
+                            <TextBlock x:Name="StatusText" Text="Ready" FontSize="11"
                                        Foreground="{StaticResource BrushTextSecondary}"/>
                         </StackPanel>
                     </Border>

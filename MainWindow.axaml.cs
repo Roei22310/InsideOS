@@ -12,6 +12,7 @@ using InsideOS.Services.Insights;
 using InsideOS.Services.Laboratory;
 using InsideOS.Services.Learning;
 using InsideOS.Services.Processes;
+using InsideOS.Services.Replay;
 using InsideOS.Services.Settings;
 using InsideOS.Services.SystemMetrics;
 using InsideOS.Services.Timeline;
@@ -26,6 +27,7 @@ public partial class MainWindow : Window
     private readonly ProcessSelection _processSelection = new();
     private readonly ProcessFlowMonitor _flow;
     private readonly ExplanationFeed _explanations;
+    private readonly RuleBasedExplanationEngine _flowExplainer;
     private readonly LearnModeState _learnMode = new();
     private readonly AppSettingsService _settings = AppSettingsService.Load();
     private readonly LessonManager _lessons;
@@ -33,6 +35,9 @@ public partial class MainWindow : Window
     private readonly InsightService _insights;
     private readonly MetricHistoryService _history;
     private readonly LaboratoryService _lab;
+    private readonly ReplayState _replayState = new();
+    private readonly SessionRecorder _recorder;
+    private readonly ReplayService _replay;
     private readonly ILearnContentService _learnContent;
     private bool _syncingNav;
     private bool _onboardingSelectionPending;
@@ -45,15 +50,21 @@ public partial class MainWindow : Window
         _metrics.Start();
         _processes = new ProcessMonitorService(CreateProcessSource());
         _flow = new ProcessFlowMonitor(_processes, _processSelection, CreateProcessIoSource());
-        _explanations = new ExplanationFeed(_flow, new RuleBasedExplanationEngine());
+        _flowExplainer = new RuleBasedExplanationEngine();
+        _explanations = new ExplanationFeed(_flow, _flowExplainer);
         _lessons = new LessonManager(new BuiltInLessonProvider(), _settings);
-        _story = new SystemStoryService(_processes, _processSelection, CreateProcessIoSource());
+        _story = new SystemStoryService(_processes, _processSelection, CreateProcessIoSource(), _replayState);
         _story.EnsureStarted(); // record the system's story from launch, not from first page visit
-        _insights = new InsightService(_metrics, _processes, _story); // interpretation lives in NarrationEngine
+        _insights = new InsightService(_metrics, _processes, _story, _replayState); // interpretation lives in NarrationEngine
         _insights.EnsureStarted(); // pure subscription on top of already-running services
-        _history = new MetricHistoryService(_metrics, _processes);
+        _history = new MetricHistoryService(_metrics, _processes, _replayState);
         _history.EnsureStarted(); // rolling in-memory history from launch, same sources
-        _lab = new LaboratoryService(_processes, _processSelection, _metrics, _story); // observes via existing pipelines only
+        _recorder = new SessionRecorder(_processes, _metrics, _flow, _story); // attaches only while an experiment records
+        _lab = new LaboratoryService(_processes, _processSelection, _metrics, _story, _recorder, _replayState);
+        _replay = new ReplayService(_replayState, _processes, _metrics, _flow, _story,
+            _insights, _history, _recorder, _lab);
+        _replay.Changed += UpdateReplayPill; // title-bar pill says when we're in the past
+        _replay.Sought += _flowExplainer.Reset; // jumps never smooth evidence across time
         _learnContent = new LearnContentService(_metrics.StaticInfo.TotalMemoryBytes); // shared by Action Flow + Processes
         SelectNav("live"); // Learning sits above Live View, but the dashboard stays the start page
 
@@ -329,7 +340,9 @@ public partial class MainWindow : Window
                 return new LearningPage(_lessons, StartLesson);
             case "laboratory":
                 _processes.EnsureStarted(); // experiments are observed through the normal pipeline
-                return new LaboratoryPage(_lab, SelectNav);
+                return new LaboratoryPage(_lab, SelectNav, StartReplay);
+            case "replay":
+                return new ReplayPage(_replay);
             case "processes":
                 _processes.EnsureStarted();
                 return new ProcessExplorerPage(_processes, _processSelection, _learnContent,
@@ -357,6 +370,7 @@ public partial class MainWindow : Window
     {
         "learning" => "Learning",
         "laboratory" => "Laboratory",
+        "replay" => "Replay",
         "processes" => "Processes",
         "timeline" => "Timeline",
         "flow" => "Action Flow",
@@ -364,6 +378,27 @@ public partial class MainWindow : Window
         "settings" => "Settings",
         _ => "Live View",
     };
+
+    /// <summary>Laboratory "Replay Session" click-through: enter replay and show the page.</summary>
+    private void StartReplay()
+    {
+        if (_replay.Start())
+            SelectNav("replay");
+    }
+
+    private void UpdateReplayPill()
+    {
+        if (_replayState.IsReplaying)
+        {
+            StatusText.Text = $"Replaying · {(int)_replay.Position.TotalMinutes:0}:{_replay.Position.Seconds:00}";
+            StatusDot.Fill = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#E5A455"));
+        }
+        else
+        {
+            StatusText.Text = "Ready";
+            StatusDot.Fill = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#3FBF7F"));
+        }
+    }
 
     private void OnMonitorModePressed(object? sender, PointerPressedEventArgs e)
     {

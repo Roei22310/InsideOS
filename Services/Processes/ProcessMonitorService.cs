@@ -17,8 +17,25 @@ public sealed class ProcessMonitorService : IDisposable
     private readonly IProcessInfoSource _source;
     private readonly CancellationTokenSource _cts = new();
     private int _started;
+    private volatile bool _replaying;
 
     public event Action<IReadOnlyList<ProcessSample>>? ProcessesUpdated;
+
+    /// <summary>
+    /// Replay seam: while replaying, live sampling continues in the
+    /// background (so state stays warm) but its emission is muted, and the
+    /// replay controller injects recorded frames through the very same
+    /// event — consumers cannot tell the difference, by design.
+    /// </summary>
+    public void EnterReplay() => _replaying = true;
+
+    public void ExitReplay() => _replaying = false;
+
+    public void InjectReplay(IReadOnlyList<ProcessSample> samples)
+    {
+        if (_replaying && samples.Count > 0)
+            ProcessesUpdated?.Invoke(samples);
+    }
 
     public ProcessMonitorService(IProcessInfoSource source)
     {
@@ -57,7 +74,7 @@ public sealed class ProcessMonitorService : IDisposable
         try
         {
             var samples = await _source.SampleAsync(ct);
-            if (samples.Count > 0)
+            if (samples.Count > 0 && !_replaying)
                 ProcessesUpdated?.Invoke(samples);
         }
         catch (OperationCanceledException)

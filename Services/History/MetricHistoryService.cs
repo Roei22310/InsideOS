@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using InsideOS.Services.Processes;
+using InsideOS.Services.Replay;
 using InsideOS.Services.SystemMetrics;
 
 namespace InsideOS.Services.History;
@@ -37,14 +38,14 @@ public sealed class MetricHistoryService : IDisposable
                 _count++;
         }
 
-        public int Read(DateTime cutoff, DateTime[] times, double[] values)
+        public int Read(DateTime cutoff, DateTime end, DateTime[] times, double[] values)
         {
             int n = 0;
             int start = (_next - _count + Capacity) % Capacity;
             for (int i = 0; i < _count; i++)
             {
                 int idx = (start + i) % Capacity;
-                if (_times[idx] < cutoff)
+                if (_times[idx] < cutoff || _times[idx] > end)
                     continue;
                 times[n] = _times[idx];
                 values[n] = _values[idx];
@@ -81,6 +82,7 @@ public sealed class MetricHistoryService : IDisposable
 
     private readonly LiveMetricsService _metrics;
     private readonly ProcessMonitorService _processes;
+    private readonly ReplayState _replay;
     private readonly object _lock = new();
     private readonly Dictionary<HistoryMetric, Ring> _rings;
     private readonly Dictionary<int, PidRing> _pids = new();
@@ -91,12 +93,23 @@ public sealed class MetricHistoryService : IDisposable
     /// <summary>Raised about once per second after new samples land (background thread).</summary>
     public event Action? Updated;
 
-    public MetricHistoryService(LiveMetricsService metrics, ProcessMonitorService processes)
+    public MetricHistoryService(LiveMetricsService metrics, ProcessMonitorService processes,
+        ReplayState replay)
     {
         _metrics = metrics;
         _processes = processes;
+        _replay = replay;
         _rings = Enum.GetValues<HistoryMetric>().ToDictionary(m => m, _ => new Ring());
     }
+
+    /// <summary>The moment history reads end at: the present, or — during a
+    /// replay — the replayed instant, so charts show exactly what they showed
+    /// then. The rings already hold that past; no history is duplicated.</summary>
+    private DateTime ViewEnd => _replay.IsReplaying ? _replay.ReplayNow : DateTime.Now;
+
+    /// <summary>Lets the replay controller pulse chart refreshes while live
+    /// ingestion is paused.</summary>
+    public void RaiseReplayTick() => Updated?.Invoke();
 
     public void EnsureStarted()
     {
@@ -120,15 +133,17 @@ public sealed class MetricHistoryService : IDisposable
     /// </summary>
     public int Read(HistoryMetric metric, TimeSpan window, DateTime[] times, double[] values)
     {
-        var cutoff = DateTime.Now - window;
+        var end = ViewEnd;
+        var cutoff = end - window;
         lock (_lock)
-            return _rings[metric].Read(cutoff, times, values);
+            return _rings[metric].Read(cutoff, end, times, values);
     }
 
     /// <summary>The most active processes (by average CPU) over the window.</summary>
     public IReadOnlyList<ProcessHistoryStat> GetTopProcesses(TimeSpan window, int count)
     {
-        var cutoff = DateTime.Now - window;
+        var end = ViewEnd;
+        var cutoff = end - window;
         var stats = new List<ProcessHistoryStat>();
         lock (_lock)
         {
@@ -142,7 +157,7 @@ public sealed class MetricHistoryService : IDisposable
                 for (int i = 0; i < ring.Count; i++)
                 {
                     int idx = (start + i) % Capacity;
-                    if (ring.Times[idx] < cutoff)
+                    if (ring.Times[idx] < cutoff || ring.Times[idx] > end)
                         continue;
                     double cpu = ring.Cpu[idx];
                     inWindow.Add(cpu);
@@ -179,7 +194,7 @@ public sealed class MetricHistoryService : IDisposable
 
     private void OnMetrics(MetricsSnapshot s)
     {
-        if (_disposed)
+        if (_disposed || _replay.IsReplaying)
             return;
         var now = DateTime.Now;
         lock (_lock)
@@ -202,7 +217,7 @@ public sealed class MetricHistoryService : IDisposable
 
     private void OnProcesses(IReadOnlyList<ProcessSample> samples)
     {
-        if (_disposed)
+        if (_disposed || _replay.IsReplaying)
             return;
         var now = DateTime.Now;
         lock (_lock)

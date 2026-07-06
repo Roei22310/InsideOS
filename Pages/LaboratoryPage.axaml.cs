@@ -40,14 +40,16 @@ public partial class LaboratoryPage : UserControl
 
     private readonly LaboratoryService _lab;
     private readonly Action<string> _navigate;
+    private readonly Action _openReplay;
     private readonly List<Card> _cards = new();
     private bool _attached;
 
-    public LaboratoryPage(LaboratoryService lab, Action<string> navigate)
+    public LaboratoryPage(LaboratoryService lab, Action<string> navigate, Action openReplay)
     {
         InitializeComponent();
         _lab = lab;
         _navigate = navigate;
+        _openReplay = openReplay;
 
         // Two cards in XAML, bound to the catalog in order. Future experiments
         // extend this list (or replace it with a fully templated version).
@@ -265,4 +267,7 @@ public partial class LaboratoryPage : UserControl
 
     private void OnOpenFlow(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         _navigate("flow");
+
+    private void OnReplay(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        _openReplay(); // enters replay of this session and shows the Replay page
 }

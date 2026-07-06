@@ -25,6 +25,7 @@ public sealed class ProcessFlowMonitor : IDisposable
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     private volatile IReadOnlyList<ProcessSample>? _latest;
+    private volatile bool _replaying;
     private int _started;
     private int _trackedPid = -1;
     private (ulong Read, ulong Written, long Timestamp)? _previousDisk;
@@ -33,6 +34,23 @@ public sealed class ProcessFlowMonitor : IDisposable
     public ProcessSelection Selection { get; }
 
     public event Action<ProcessFlowSnapshot>? FlowUpdated;
+
+    /// <summary>Replay seam: live per-second sampling is skipped entirely
+    /// while replaying (no syscalls wasted on the past); recorded snapshots
+    /// flow through the same event.</summary>
+    public void EnterReplay() => _replaying = true;
+
+    public void ExitReplay()
+    {
+        _replaying = false;
+        RequestImmediateSample(); // repaint Action Flow with the live present right away
+    }
+
+    public void InjectReplay(ProcessFlowSnapshot? snapshot)
+    {
+        if (_replaying && snapshot is not null)
+            FlowUpdated?.Invoke(snapshot);
+    }
 
     public ProcessFlowMonitor(ProcessMonitorService processes, ProcessSelection selection, IProcessIoSource io)
     {
@@ -84,6 +102,9 @@ public sealed class ProcessFlowMonitor : IDisposable
 
         try
         {
+            if (_replaying)
+                return; // the replay controller owns the feed right now
+
             var selected = Selection.Current;
             if (selected is null)
             {

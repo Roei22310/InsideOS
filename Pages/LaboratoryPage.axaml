@@ -140,6 +140,8 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="12">
                                 <Button Classes="ghost" Content="Run Again" Click="OnStart"/>
+                                <Button x:Name="ReplayButton" Classes="ghost" Content="Replay Session"
+                                        Click="OnReplay"/>
                                 <TextBlock Text="You can run this as many times as you like."
                                            Classes="labMuted" VerticalAlignment="Center"/>
                             </StackPanel>
@@ -232,6 +234,8 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="12">
                                 <Button Classes="ghost" Content="Run Again" Click="OnStart2"/>
+                                <Button x:Name="ReplayButton2" Classes="ghost" Content="Replay Session"
+                                        Click="OnReplay"/>
                                 <TextBlock Text="You can run this as many times as you like."
                                            Classes="labMuted" VerticalAlignment="Center"/>
                             </StackPanel>

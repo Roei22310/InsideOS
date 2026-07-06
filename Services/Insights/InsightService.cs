@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using InsideOS.Services.Narration;
 using InsideOS.Services.Processes;
+using InsideOS.Services.Replay;
 using InsideOS.Services.SystemMetrics;
 using InsideOS.Services.Timeline;
 
@@ -38,7 +39,9 @@ public sealed class InsightService : IDisposable
     private readonly LiveMetricsService _metrics;
     private readonly ProcessMonitorService _processes;
     private readonly SystemStoryService _story;
+    private readonly ReplayState _replay;
     private readonly object _state = new();
+    private IReadOnlyList<NarratedActivity>? _savedLive;
 
     private readonly List<double> _systemCpu = new();
     private readonly List<double> _netIn = new();
@@ -70,11 +73,41 @@ public sealed class InsightService : IDisposable
     public InsightService(
         LiveMetricsService metrics,
         ProcessMonitorService processes,
-        SystemStoryService story)
+        SystemStoryService story,
+        ReplayState replay)
     {
         _metrics = metrics;
         _processes = processes;
         _story = story;
+        _replay = replay;
+    }
+
+    // ---- replay: live analysis pauses; the controller publishes activities
+    //      recomputed by the Narration Engine from recorded evidence ----
+
+    public void EnterReplay()
+    {
+        lock (_state)
+            _savedLive = _current;
+    }
+
+    public void PublishReplay(IReadOnlyList<NarratedActivity> activities)
+    {
+        lock (_state)
+            _current = activities;
+        InsightsUpdated?.Invoke(activities);
+    }
+
+    public void ExitReplay()
+    {
+        IReadOnlyList<NarratedActivity> restored;
+        lock (_state)
+        {
+            _current = _savedLive ?? Array.Empty<NarratedActivity>();
+            _savedLive = null;
+            restored = _current;
+        }
+        InsightsUpdated?.Invoke(restored);
     }
 
     public IReadOnlyList<NarratedActivity> CurrentInsights
@@ -108,7 +141,7 @@ public sealed class InsightService : IDisposable
 
     private void OnMetrics(MetricsSnapshot snapshot)
     {
-        if (_disposed)
+        if (_disposed || _replay.IsReplaying)
             return;
         IReadOnlyList<NarratedActivity>? changed = null;
         DailySummary? summary = null;
@@ -147,7 +180,7 @@ public sealed class InsightService : IDisposable
 
     private void OnProcesses(IReadOnlyList<ProcessSample> samples)
     {
-        if (_disposed)
+        if (_disposed || _replay.IsReplaying)
             return;
         lock (_state)
         {
@@ -180,7 +213,7 @@ public sealed class InsightService : IDisposable
 
     private void OnStoryChanged(TimelineStorySnapshot snapshot)
     {
-        if (_disposed)
+        if (_disposed || _replay.IsReplaying)
             return;
         lock (_state)
         {

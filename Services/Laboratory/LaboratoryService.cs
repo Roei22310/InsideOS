@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using InsideOS.Services.Processes;
+using InsideOS.Services.Replay;
 using InsideOS.Services.SystemMetrics;
 using InsideOS.Services.Timeline;
 
@@ -31,6 +32,8 @@ public sealed class LaboratoryService : IDisposable
     private readonly ProcessSelection _selection;
     private readonly LiveMetricsService _metrics;
     private readonly SystemStoryService _story;
+    private readonly SessionRecorder _recorder;
+    private readonly ReplayState _replay;
     private readonly object _lock = new();
 
     private Process? _child;
@@ -76,12 +79,16 @@ public sealed class LaboratoryService : IDisposable
         ProcessMonitorService processes,
         ProcessSelection selection,
         LiveMetricsService metrics,
-        SystemStoryService story)
+        SystemStoryService story,
+        SessionRecorder recorder,
+        ReplayState replay)
     {
         _processes = processes;
         _selection = selection;
         _metrics = metrics;
         _story = story;
+        _recorder = recorder;
+        _replay = replay;
         Experiments = new[] { BuildCpuExperiment(), BuildLifecycleExperiment() };
     }
 
@@ -204,8 +211,8 @@ public sealed class LaboratoryService : IDisposable
     {
         lock (_lock)
         {
-            if (_running is not null)
-                return false;
+            if (_running is not null || _replay.IsReplaying)
+                return false; // one reality at a time
 
             _running = definition;
             _stopRequested = false;
@@ -255,6 +262,9 @@ public sealed class LaboratoryService : IDisposable
                 _child = child;
                 WorkerPid = child.Id;
             }
+            // Every experiment records its session automatically, so the user
+            // can replay it. Reuses the running pipelines — no new monitoring.
+            _recorder.Begin(definition.Id, definition.Title, child.Id);
         }
         catch (Exception ex)
         {
@@ -299,6 +309,8 @@ public sealed class LaboratoryService : IDisposable
 
     private void OnProcessesUpdated(IReadOnlyList<ProcessSample> samples)
     {
+        if (_replay.IsReplaying)
+            return; // replayed frames are not experiment observations
         ExperimentDefinition? def;
         int pid;
         TimeSpan elapsed;
@@ -430,6 +442,7 @@ public sealed class LaboratoryService : IDisposable
 
         _processes.ProcessesUpdated -= OnProcessesUpdated;
         _metrics.SnapshotUpdated -= OnMetricsSnapshot;
+        _recorder.CompleteAfterTail(); // keep taping a few seconds so the exit event lands
 
         if (outcome == ExperimentOutcome.Completed)
             _story.ReportLearningEvent("Experiment completed",

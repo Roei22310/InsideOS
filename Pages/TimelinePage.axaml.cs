@@ -66,6 +66,7 @@ public partial class TimelinePage : UserControl
         _insights = insights;
         _openStory = openStory;
         _story.StoryChanged += snapshot => Dispatcher.UIThread.Post(() => OnStoryChanged(snapshot));
+        _story.StoriesReset += () => Dispatcher.UIThread.Post(() => { if (_attached) Reload(); });
         _insights.InsightsUpdated += list => Dispatcher.UIThread.Post(() => ApplyInsights(list));
         _insights.SummaryUpdated += summary => Dispatcher.UIThread.Post(() => ApplySummary(summary));
     }

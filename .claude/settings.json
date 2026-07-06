@@ -78,7 +78,11 @@
       "Bash(grep DRIVER: __TRACKED_VAR__/lab_driver.log)",
       "Read(//Users/roei/.config/**)",
       "Read(//Users/roei/Library/Application Support/**)",
-      "Bash(ls \"$HOME/Library/Application Support/\" | grep -i drivertest && rm -rf \"$HOME/Library/Application Support/InsideOS-DriverTest15\" && echo \"removed driver settings dir\" || echo \"nothing to clean\")"
+      "Bash(ls \"$HOME/Library/Application Support/\" | grep -i drivertest && rm -rf \"$HOME/Library/Application Support/InsideOS-DriverTest15\" && echo \"removed driver settings dir\" || echo \"nothing to clean\")",
+      "Bash(rm -rf /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest171)",
+      "Bash(rsync -a --exclude bin --exclude obj /Users/roei/Desktop/InsideOS/ /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest171/)",
+      "Bash(python3 - /private/tmp/claude-501/-Users-roei-Desktop-InsideOS/fdb2ca49-7e54-4bd1-8d0a-ea2a75bfefd1/scratchpad/obtest171)",
+      "Bash(mkdir -p '/Users/roei/Library/Application Support/InsideOS-DriverTest171')"
     ],
     "additionalDirectories": [
       "/Users/roei/Library/Application Support"

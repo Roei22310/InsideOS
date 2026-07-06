@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using InsideOS.Services.ActionFlow;
 using InsideOS.Services.Processes;
+using InsideOS.Services.Replay;
 using InsideOS.Services.SystemMetrics;
 
 namespace InsideOS.Services.Timeline;
@@ -67,6 +68,7 @@ public sealed class SystemStoryService : IDisposable
     private readonly ProcessMonitorService _processes;
     private readonly ProcessSelection _selection;
     private readonly IProcessIoSource _io;
+    private readonly ReplayState _replay;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _lock = new();
     private readonly Dictionary<int, PidState> _pids = new();
@@ -82,11 +84,17 @@ public sealed class SystemStoryService : IDisposable
     /// <summary>New or updated story. Raised on a background thread — UI must marshal.</summary>
     public event Action<TimelineStorySnapshot>? StoryChanged;
 
-    public SystemStoryService(ProcessMonitorService processes, ProcessSelection selection, IProcessIoSource io)
+    /// <summary>The visible story set changed wholesale (entering/leaving a
+    /// replayed moment) — consumers should reload rather than patch.</summary>
+    public event Action? StoriesReset;
+
+    public SystemStoryService(ProcessMonitorService processes, ProcessSelection selection,
+        IProcessIoSource io, ReplayState replay)
     {
         _processes = processes;
         _selection = selection;
         _io = io;
+        _replay = replay;
     }
 
     public void EnsureStarted()
@@ -108,12 +116,67 @@ public sealed class SystemStoryService : IDisposable
     public IReadOnlyList<TimelineStorySnapshot> GetStories()
     {
         lock (_lock)
-            return _stories.Select(Snapshot).ToArray();
+        {
+            if (!_replay.IsReplaying)
+                return _stories.Select(Snapshot).ToArray();
+
+            // Time travel: the story set exactly as it stood at the replayed
+            // moment — events after it don't exist yet, and every explanation
+            // is recomputed by the Narration Engine from the truncated
+            // evidence (never recorded, always re-derived).
+            var t = _replay.ReplayNow;
+            return _stories
+                .Select(story => TruncatedSnapshotLocked(story, t))
+                .Where(snapshot => snapshot is not null)
+                .Select(snapshot => snapshot!)
+                .ToArray();
+        }
+    }
+
+    /// <summary>Fires StoryChanged for stories that gained events inside the
+    /// replayed window — the timeline grows event-by-event, like live.</summary>
+    public void EmitReplayWindow(DateTime fromExclusive, DateTime toInclusive)
+    {
+        var changed = new List<TimelineStorySnapshot>();
+        lock (_lock)
+        {
+            foreach (var story in _stories)
+            {
+                bool touched = story.Events.Any(e => e.Time > fromExclusive && e.Time <= toInclusive);
+                if (touched && TruncatedSnapshotLocked(story, toInclusive) is { } snapshot)
+                    changed.Add(snapshot);
+            }
+        }
+        foreach (var snapshot in changed)
+            StoryChanged?.Invoke(snapshot);
+    }
+
+    /// <summary>Announce a wholesale view change (replay entered or exited).</summary>
+    public void NotifyReplayTransition() => StoriesReset?.Invoke();
+
+    private static TimelineStorySnapshot? TruncatedSnapshotLocked(Story story, DateTime upTo)
+    {
+        var events = story.Events.Where(e => e.Time <= upTo).ToArray();
+        if (events.Length == 0)
+            return null;
+        return new TimelineStorySnapshot(
+            story.Id,
+            story.Pid,
+            story.ProcessName,
+            story.StartTime,
+            events[^1].Time,
+            events,
+            Narration.NarrationEngine.NarrateStory(story.ProcessName, events)?.Summary,
+            events.Max(e => e.Severity),
+            events.Select(e => e.Category).Distinct().ToArray(),
+            story.LastSample);
     }
 
     /// <summary>Records a learning milestone (e.g. lesson completed) on the timeline.</summary>
     public void ReportLearningEvent(string title, string detail)
     {
+        if (_replay.IsReplaying)
+            return; // the past is read-only
         var evt = new TimelineEvent(DateTime.Now, TimelineEventKind.Learning,
             TimelineCategory.Learning, title, detail, TimelineSeverity.Info);
         TimelineStorySnapshot snapshot;
@@ -141,6 +204,8 @@ public sealed class SystemStoryService : IDisposable
 
     private async void OnProcessesUpdated(IReadOnlyList<ProcessSample> samples)
     {
+        if (_replay.IsReplaying)
+            return; // replayed frames are presentation, never new evidence
         if (_disposed || !await _gate.WaitAsync(0))
             return; // still busy with the previous tick — skip, never queue up
         try

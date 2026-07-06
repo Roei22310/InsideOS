@@ -26,6 +26,13 @@ public sealed class RuleBasedExplanationEngine : IExplanationEngine
     private string? _pendingId;
     private int _pendingTicks;
 
+    /// <summary>
+    /// Forgets all rolling readings and hysteresis. Called on replay seeks:
+    /// a jump through time must never smooth evidence across the jump — the
+    /// narration re-primes from the sought moment alone.
+    /// </summary>
+    public void Reset() => _pid = -1; // next snapshot clears the window and re-primes
+
     public Explanation Explain(ProcessFlowSnapshot snapshot)
     {
         if (snapshot.Pid != _pid)

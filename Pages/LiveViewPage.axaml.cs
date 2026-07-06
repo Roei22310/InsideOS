@@ -83,6 +83,7 @@ public partial class LiveViewPage : UserControl
         metrics.SnapshotUpdated += s => Dispatcher.UIThread.Post(() => ApplyMetrics(s));
         processes.ProcessesUpdated += s => Dispatcher.UIThread.Post(() => ApplyProcesses(s));
         _story.StoryChanged += _ => Dispatcher.UIThread.Post(RefreshTimeline);
+        _story.StoriesReset += () => Dispatcher.UIThread.Post(RefreshTimeline);
         _insights.InsightsUpdated += list => Dispatcher.UIThread.Post(() => ApplyInsights(list));
         _lessons.Changed += () => Dispatcher.UIThread.Post(ApplyLearning);
         ApplyLearning();
